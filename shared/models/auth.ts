@@ -49,6 +49,11 @@ export const users = pgTable("users", {
   // Security
   isAiChatBlocked: boolean("is_ai_chat_blocked").default(false),
 
+  // Subscription tracking
+  subscriptionId: varchar("subscription_id"),
+  subscriptionStatus: varchar("subscription_status"), // 'active', 'trailing', 'past_due', 'canceled'
+  currentPeriodEnd: timestamp("current_period_end"),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -163,6 +168,6 @@ export const insertFightResultSchema = createInsertSchema(fightResults).omit({ i
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type UserPick = typeof userPicks.$inferSelect;
-export type InsertUserPick = z.infer<typeof insertUserPickSchema>;
+export type InsertUserPick = typeof userPicks.$inferInsert;
 export type FightResult = typeof fightResults.$inferSelect;
-export type InsertFightResult = z.infer<typeof insertFightResultSchema>;
+export type InsertFightResult = typeof fightResults.$inferInsert;

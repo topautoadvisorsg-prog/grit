@@ -1,12 +1,75 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { storage } from "../../storage";
 import { insertFighterSchema } from "../../../shared/schema";
 import { logger } from '../../utils/logger';
 import { validate } from '../../middleware/validate';
 import { bulkFightersSchema, bulkFightsSchema } from '../../schemas';
 
+/**
+ * Admin-only fighter and fight history management.
+ * Protected by isAuthenticated + requireAdmin.
+ */
 export function registerAdminFighterRoutes(app: Express) {
+
+  // Create a new fighter (Admin only)
+  app.post("/api/fighters", isAuthenticated, requireAdmin, validate(insertFighterSchema), async (req: Request, res: Response) => {
+    try {
+      // Body is already validated by middleware
+      const fighter = await storage.createFighter(req.body);
+      const fullName = `${fighter.firstName} ${fighter.lastName}`;
+      await storage.linkUnlinkedFightHistory(fullName, fighter.id);
+
+      res.status(201).json(fighter);
+    } catch (error) {
+      logger.error("Error creating fighter:", error);
+      res.status(500).json({ error: "Failed to create fighter" });
+    }
+  });
+
+  // Update a fighter (Admin only)
+  app.put("/api/fighters/:id", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const existingFighter = await storage.getFighter(req.params.id as string);
+      if (!existingFighter) {
+        return res.status(404).json({ error: "Fighter not found" });
+      }
+
+      const mergedData = { ...existingFighter, ...req.body, lastUpdated: new Date().toISOString() };
+      const validationResult = insertFighterSchema.safeParse(mergedData);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: "Invalid fighter data after merge",
+          details: validationResult.error.issues
+        });
+      }
+
+      const fighter = await storage.updateFighter(req.params.id as string, validationResult.data);
+      if (!fighter) {
+        return res.status(500).json({ error: "Failed to update fighter" });
+      }
+      res.json(fighter);
+    } catch (error) {
+      logger.error("Error updating fighter:", error);
+      res.status(500).json({ error: "Failed to update fighter" });
+    }
+  });
+
+  // Delete a fighter (Admin only)
+  app.delete("/api/fighters/:id", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
+    try {
+      await storage.deleteFightHistoryByFighter(req.params.id as string);
+      const deleted = await storage.deleteFighter(req.params.id as string);
+      if (!deleted) {
+        return res.status(404).json({ error: "Fighter not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      logger.error("Error deleting fighter:", error);
+      res.status(500).json({ error: "Failed to delete fighter" });
+    }
+  });
+
   app.post("/api/fighters/bulk", isAuthenticated, requireAdmin, validate(bulkFightersSchema), async (req: Request, res: Response) => {
     try {
       const { fighters: fightersData } = req.body;

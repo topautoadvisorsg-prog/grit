@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { storage } from "../../storage";
 import { insertEventSchema, insertEventFightSchema, CARD_PLACEMENTS } from "../../../shared/schema";
 import { v4 as uuidv4 } from "uuid";
@@ -75,79 +75,6 @@ export function registerEventRoutes(app: Express) {
     } catch (error) {
       logger.error("Error fetching event:", error);
       res.status(500).json({ error: "Failed to fetch event" });
-    }
-  });
-
-  app.post("/api/events", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const body = req.body as CreateEventRequest;
-
-      const eventValidation = insertEventSchema.safeParse({
-        name: body.name,
-        date: body.date,
-        venue: body.venue,
-        city: body.city,
-        state: body.state,
-        country: body.country,
-        organization: body.organization,
-        description: body.description,
-      });
-
-      if (!eventValidation.success) {
-        return res.status(400).json({
-          error: "Invalid event data",
-          details: (eventValidation.error as any).errors,
-        });
-      }
-
-      if (!body.fights || body.fights.length === 0) {
-        return res.status(400).json({ error: "Event must have at least one fight" });
-      }
-
-      for (const fight of body.fights) {
-        if (!CARD_PLACEMENTS.includes(fight.cardPlacement as any)) {
-          return res.status(400).json({
-            error: `Invalid card placement: ${fight.cardPlacement}. Must be one of: ${CARD_PLACEMENTS.join(", ")}`,
-          });
-        }
-        const fighter1 = await storage.getFighter(fight.fighter1Id);
-        const fighter2 = await storage.getFighter(fight.fighter2Id);
-        if (!fighter1 || !fighter2) {
-          return res.status(400).json({ error: "One or more fighters not found" });
-        }
-        if (fight.fighter1Id === fight.fighter2Id) {
-          return res.status(400).json({ error: "Fighter cannot fight themselves" });
-        }
-      }
-
-      const eventId = uuidv4();
-      const createdEvent = await storage.createEvent({
-        ...eventValidation.data,
-        id: eventId,
-        createdAt: new Date(),
-      });
-
-      const fightsToCreate = body.fights.map((fight) => ({
-        id: uuidv4(),
-        eventId,
-        fighter1Id: fight.fighter1Id,
-        fighter2Id: fight.fighter2Id,
-        cardPlacement: fight.cardPlacement,
-        boutOrder: fight.boutOrder,
-        weightClass: fight.weightClass,
-        isTitleFight: fight.isTitleFight,
-        rounds: fight.rounds,
-      }));
-
-      const createdFights = await storage.createEventFights(fightsToCreate);
-
-      res.status(201).json({
-        ...createdEvent,
-        fights: createdFights,
-      });
-    } catch (error) {
-      logger.error("Error creating event:", error);
-      res.status(500).json({ error: "Failed to create event" });
     }
   });
 }

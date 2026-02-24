@@ -5,6 +5,8 @@ import { StatsWidget } from './widgets/StatsWidget';
 import { CountdownWidget } from './widgets/CountdownWidget';
 import { BadgeWidget } from './widgets/BadgeWidget';
 import { ActivityWidget } from './widgets/ActivityWidget';
+import { TierStatusWidget } from './widgets/TierStatusWidget';
+import { StarLevelWidget } from './widgets/StarLevelWidget';
 import { generateMockActivities } from './ActivityFeed';
 import { Trophy, Loader2 } from 'lucide-react';
 
@@ -28,6 +30,9 @@ interface DashboardData {
         picksComplete: number;
         totalFights: number;
     } | null;
+    tier: string;
+    starLevel: number;
+    currentPeriodEnd: string | null;
 }
 
 export const Dashboard: React.FC = () => {
@@ -70,6 +75,11 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <StatsWidget data={data} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TierStatusWidget tier={data.tier} currentPeriodEnd={data.currentPeriodEnd} />
+                <StarLevelWidget starLevel={data.starLevel} />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-6">

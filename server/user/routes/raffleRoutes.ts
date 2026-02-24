@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { db } from "../../db";
 import { raffleTickets, raffleDraws } from "../../../shared/schema";
 import { users } from "../../../shared/models/auth";

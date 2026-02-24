@@ -1,18 +1,13 @@
 import type { Express, Request, Response } from "express";
 
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { db } from "../../db";
-import { users } from "../../../shared/models/auth";
 import { eventFights, userBadges } from "../../../shared/schema";
+import { users } from "../../../shared/models/auth";
 import { eq, ilike, or, desc } from "drizzle-orm";
 import { logger } from '../../utils/logger';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-
-async function isAdmin(req: Request): Promise<boolean> {
-    const [user] = await db.select().from(users).where(eq(users.id, req.user.id));
-    return user?.role === "admin" || user?.email === ADMIN_EMAIL;
-}
+// Admin authorization is centralized in requireAdmin middleware
 
 export function registerAdminManagementRoutes(app: Express) {
 
@@ -21,9 +16,7 @@ export function registerAdminManagementRoutes(app: Express) {
     // ──────────────────────────────────────
     app.get("/api/admin/users/search", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const q = (req.query.q as string || "").trim();
             if (!q) return res.json([]);
@@ -64,9 +57,7 @@ export function registerAdminManagementRoutes(app: Express) {
     // Get badges for a specific user
     app.get("/api/admin/users/:userId/badges", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { userId } = req.params;
             const badges = await db.select()
@@ -84,9 +75,7 @@ export function registerAdminManagementRoutes(app: Express) {
     // Assign a badge to a user
     app.post("/api/admin/users/:userId/badges", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { userId } = req.params;
             const { badgeName, badgeIcon, reason } = req.body;
@@ -114,9 +103,7 @@ export function registerAdminManagementRoutes(app: Express) {
     // Remove a badge
     app.delete("/api/admin/users/:userId/badges/:badgeId", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { badgeId } = req.params;
             const [deleted] = await db.delete(userBadges)
@@ -141,9 +128,7 @@ export function registerAdminManagementRoutes(app: Express) {
     // Update odds for a fight
     app.put("/api/admin/fights/:fightId/odds", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { fightId } = req.params;
             const { odds } = req.body;

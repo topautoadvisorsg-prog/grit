@@ -1,6 +1,9 @@
 import 'dotenv/config';
+import './config/env'; // Validate environment before app starts
+import './types/express'; // Load type declarations
 import express from "express";
-import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, registerReplitOIDCRoutes } from "./replit_integrations/auth";
+import { isAuthenticated, requireAdmin } from "./auth/guards";
 import { registerAdminRoutes } from "./admin/routes/adminRoutes";
 import { registerAdminManagementRoutes } from "./admin/routes/adminManagementRoutes";
 import { registerVerificationRoutes } from "./admin/routes/verificationRoutes";
@@ -14,6 +17,8 @@ import { registerAdminUserRoutes } from "./admin/routes/adminUserRoutes";
 import { registerAdminAIChatRoutes } from "./admin/routes/adminAIChatRoutes";
 import { registerAdminProgressionRoutes } from "./admin/routes/adminProgressionRoutes";
 import { registerAdminRaffleRoutes } from "./admin/routes/adminRaffleRoutes";
+import { registerAdminFightResolutionRoutes } from "./admin/routes/adminFightResolutionRoutes";
+import { registerAdminTagRoutes } from "./admin/routes/adminTagRoutes";
 
 import { registerFighterImageRoutes } from "./user/routes/fighterImageRoutes";
 import { registerFighterRoutes } from "./user/routes/fighterRoutes";
@@ -36,17 +41,28 @@ import userSettingsRoutes from "./user/routes/userSettingsRoutes";
 import badgeRoutes from "./user/routes/badgeRoutes";
 import { storage } from "./storage";
 import { registerUploadRoutes } from "./user/routes/uploadRoutes";
+import paymentRouter from "./user/routes/paymentRoutes";
+import { registerStripeWebhook } from "./api/webhooks/stripeWebhook";
+import heartbeatRouter from "./system/heartbeat";
+import { socketService } from "./services/socketService";
 import path from "path";
 import { logger } from "./utils/logger";
-import { publicApiLimiter, strictApiLimiter, authApiLimiter } from './middleware/rateLimiter';
+import { publicApiLimiter, strictApiLimiter, authApiLimiter, aiChatLimiter } from './middleware/rateLimiter';
 
 
 async function startServer() {
   const app = express();
+
+  // Register Stripe webhook BEFORE global JSON middleware to get the raw body
+  registerStripeWebhook(app);
+
   app.use(express.json({ limit: '50mb' }));
 
   await setupAuth(app);
   registerAuthRoutes(app);
+  // Replit OIDC is now "isolated" and can be explicitly registered here.
+  // To fully "disconnect", comment out the line below.
+  registerReplitOIDCRoutes(app);
 
   app.use('/api/fighters', publicApiLimiter);
   app.use('/api/events', publicApiLimiter);
@@ -54,8 +70,9 @@ async function startServer() {
   app.use('/api/leaderboard', publicApiLimiter);
   app.use('/api/tags', publicApiLimiter);
 
-  app.use('/api/chat', strictApiLimiter);
-  app.use('/api/ai', strictApiLimiter);
+  // Unified AI/Chat rate limiting - prevents route-level bypass
+  app.use('/api/chat', aiChatLimiter);
+  app.use('/api/ai', aiChatLimiter);
 
   app.use('/api/picks', authApiLimiter);
   app.use('/api/me', authApiLimiter);
@@ -79,6 +96,8 @@ async function startServer() {
   registerAdminAIChatRoutes(app);
   registerAdminProgressionRoutes(app);
   registerAdminRaffleRoutes(app);
+  registerAdminFightResolutionRoutes(app);
+  registerAdminTagRoutes(app);
   registerChatRoutes(app);
   registerModerationRoutes(app);
   registerSnapshotRoutes(app);
@@ -98,11 +117,15 @@ async function startServer() {
   app.use('/objects', express.static(path.join(process.cwd(), 'uploads')));
 
   registerUploadRoutes(app);
+  app.use(paymentRouter);
+  app.use('/api/system', heartbeatRouter);
 
   const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info(`API server running on port ${PORT}`);
   });
+
+  socketService.init(server);
 }
 
 startServer().catch((err) => logger.error(err));

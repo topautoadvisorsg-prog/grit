@@ -9,9 +9,9 @@ A comprehensive MMA fighter database, fantasy picks platform, and analytics syst
 | **Frontend** | React 18 + TypeScript + Vite |
 | **Styling** | Tailwind CSS + shadcn/ui |
 | **Backend** | Express.js + TypeScript |
-| **Database** | PostgreSQL (Supabase) |
+| **Database** | PostgreSQL |
 | **ORM** | Drizzle ORM |
-| **Auth** | Supabase Auth (JWT) |
+| **Auth** | Replit OIDC + Passport.js |
 
 ---
 
@@ -82,7 +82,7 @@ Users check their Stats (Settings → My Stats) and Rankings (sidebar)
 
 | Feature | Description |
 |---------|-------------|
-| Supabase Authentication | JWT-based auth with email/password |
+| Replit OIDC Authentication | Identity-linked auth with Replit profiles |
 | Fighter Profiles | Full CRUD with stats, records, performance |
 | Fight History Ledger | Immutable fight records with audit trail |
 | Event Management | Create/edit events with status lifecycle |
@@ -480,3 +480,27 @@ Body: {
 POST /api/admin/leaderboard/snapshot
 Body: { "type": "monthly" }
 ```
+
+## Stripe Integration
+
+The system now supports Stripe for payment processing.
+
+### Environment Variables
+The following environment variables are required:
+- `STRIPE_SECRET_KEY`: Your Stripe secret key (`sk_test_...`).
+- `STRIPE_WEBHOOK_SECRET`: Your Stripe webhook signing secret (`whsec_...`).
+
+### Webhook Setup
+The webhook endpoint is located at `/api/webhooks/stripe`. It supports:
+- `checkout.session.completed`: Handles successful checkout completions.
+- `payment_intent.succeeded`: Tracks successful payment intents.
+
+#### Local Testing
+To test webhooks locally:
+1. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli).
+2. Run `stripe login`.
+3. Start forwarding webhooks:
+   ```bash
+   stripe listen --forward-to localhost:3001/api/webhooks/stripe
+   ```
+4. Copy the signing secret provided by the CLI and add it to your environment as `STRIPE_WEBHOOK_SECRET`.

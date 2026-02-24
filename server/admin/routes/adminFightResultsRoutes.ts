@@ -1,21 +1,17 @@
 import type { Express, Request } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { db } from "../../db";
 import { users, eventFights, fightResults } from "../../../shared/schema";
 import { eq } from "drizzle-orm";
 import { logger } from '../../utils/logger';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+// Admin authorization is centralized in requireAdmin middleware
 
 export function registerAdminFightResultsRoutes(app: Express) {
   app.get("/api/admin/fights", isAuthenticated, requireAdmin, async (req: Request, res) => {
     try {
       const currentUserId = req.user.id;
-      const [currentUser] = await db.select().from(users).where(eq(users.id, currentUserId));
-
-      if (!currentUser || (currentUser.role !== "admin" && currentUser.email !== ADMIN_EMAIL)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
+      // Admin access enforced by requireAdmin middleware
 
       const fights = await db.select().from(eventFights);
       const results = await db.select().from(fightResults);

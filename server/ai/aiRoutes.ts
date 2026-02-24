@@ -1,5 +1,5 @@
 import type { Express, Response } from 'express';
-import { isAuthenticated } from '../auth/replitAuth';
+import { isAuthenticated } from '../auth/guards';
 import { requireTier } from '../auth/tierMiddleware';
 import { generatePrediction } from './openaiClient';
 import { buildFightContext } from './promptBuilder';
@@ -8,6 +8,7 @@ import { db } from '../db';
 import { eventFights, events } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
+import { openmeterService } from '../services/openmeterService';
 
 export function registerAIRoutes(app: Express) {
 
@@ -46,6 +47,12 @@ export function registerAIRoutes(app: Express) {
                 ...prediction,
                 fromCache: false,
             });
+
+            // Track usage asynchronously (only for new predictions, not cache hits)
+            const userId = (req.user as any)?.id;
+            if (userId) {
+                openmeterService.trackUsage(userId, 'ai_prediction');
+            }
 
         } catch (error: any) {
             logger.error('AI prediction error:', error);

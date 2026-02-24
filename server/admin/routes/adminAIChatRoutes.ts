@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { db } from "../../db";
 import { aiChatConfig, aiChatLogs } from "../../../shared/schema";
 import { eq, desc } from "drizzle-orm";

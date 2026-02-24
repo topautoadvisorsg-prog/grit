@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { createLeaderboardSnapshot } from "../../services/leaderboardService";
 import { logger } from '../../utils/logger';
 

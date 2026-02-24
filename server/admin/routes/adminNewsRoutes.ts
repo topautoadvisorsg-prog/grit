@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { storage } from "../../storage";
 import { insertNewsArticleSchema } from "../../../shared/schema";
 import { v4 as uuidv4 } from "uuid";

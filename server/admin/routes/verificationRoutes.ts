@@ -1,17 +1,12 @@
 import type { Express, Request, Response } from "express";
 
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { db } from "../../db";
 import { users } from "../../../shared/models/auth";
 import { eq, desc } from "drizzle-orm";
 import { logger } from '../../utils/logger';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-
-async function isAdmin(req: Request): Promise<boolean> {
-    const [user] = await db.select().from(users).where(eq(users.id, req.user.id));
-    return user?.role === "admin" || user?.email === ADMIN_EMAIL;
-}
+// Admin authorization is centralized in requireAdmin middleware
 
 export function registerVerificationRoutes(app: Express) {
 
@@ -46,9 +41,7 @@ export function registerVerificationRoutes(app: Express) {
     // Admin: Verify/unverify a user
     app.post("/api/admin/users/:id/verify", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { id } = req.params;
             const { verified } = req.body; // boolean
@@ -75,9 +68,7 @@ export function registerVerificationRoutes(app: Express) {
     // Admin: Pin/unpin as featured influencer
     app.post("/api/admin/users/:id/feature", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
         try {
-            if (!(await isAdmin(req))) {
-                return res.status(403).json({ error: "Admin access required" });
-            }
+            // Admin access enforced by requireAdmin middleware
 
             const { id } = req.params;
             const { featured } = req.body; // boolean

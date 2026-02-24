@@ -1,13 +1,14 @@
-import type { RequestHandler, Request, Response, NextFunction } from 'express';
+import type { RequestHandler } from 'express';
+import type { UserTier } from '../types/express';
 
 // Tier hierarchy for comparison
-const TIER_LEVELS: Record<string, number> = {
+const TIER_LEVELS: Record<UserTier, number> = {
     free: 0,
     medium: 1,
     premium: 2,
 };
 
-export type UserTier = 'free' | 'medium' | 'premium';
+export type { UserTier };
 
 // Feature definitions
 const FEATURE_REQUIREMENTS: Record<string, UserTier> = {
@@ -41,12 +42,12 @@ export function hasFeatureAccess(userTier: string | undefined, feature: string):
  * Must be used AFTER isAuthenticated
  */
 export function requireTier(minTier: UserTier): RequestHandler {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ message: 'Unauthorized: Not authenticated' });
         }
 
-        const userTier = (req.user as any).tier || 'free';
+        const userTier = req.user.tier || 'free';
 
         if (!hasTier(userTier, minTier)) {
             return res.status(403).json({
@@ -65,12 +66,12 @@ export function requireTier(minTier: UserTier): RequestHandler {
  * Must be used AFTER isAuthenticated
  */
 export function requireFeature(feature: string): RequestHandler {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ message: 'Unauthorized: Not authenticated' });
         }
 
-        const userTier = (req.user as any).tier || 'free';
+        const userTier = req.user.tier || 'free';
 
         if (!hasFeatureAccess(userTier, feature)) {
             const requiredTier = FEATURE_REQUIREMENTS[feature] || 'premium';

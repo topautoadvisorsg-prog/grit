@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 
-import { isAuthenticated } from '../../auth/replitAuth';
-import { requireTier } from "../../auth/tierMiddleware";
+import { isAuthenticated, requireTier } from '../../auth/guards';
 import { db } from "../../db";
 import {
     aiChatMessages, fighters, newsArticles, fighterTags, fighterTagDefinitions,
@@ -11,6 +10,21 @@ import { userPicks } from "../../../shared/models/auth";
 import { eq, desc, and, asc, inArray } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from '../../utils/logger';
+import { openmeterService } from "../../services/openmeterService";
+
+// Context Caching for Scaling
+interface CachedFight {
+    f1?: typeof fighters.$inferSelect;
+    f2?: typeof fighters.$inferSelect;
+    weightClass: string;
+}
+interface CachedEvent {
+    event: typeof events.$inferSelect;
+    fights: CachedFight[];
+}
+let cachedNextEvent: CachedEvent | null = null;
+let lastEventFetch = 0;
+const EVENT_CACHE_TTL = 60000; // 1 minute
 
 let configCache: { [key: string]: string } | null = null;
 let lastConfigFetch = 0;
@@ -34,9 +48,10 @@ export function registerAIChatRoutes(app: Express) {
 
     // --- User Chat Routes ---
 
-    app.get("/api/ai/chat/history", isAuthenticated, requireTier('premium'), async (req: Request, res: Response) => {
+    app.get("/api/ai/chat/history", isAuthenticated, requireTier('premium'), async (req, res) => {
         try {
-            const userId = req.user.id;
+            const userId = req.user?.id;
+            if (!userId) return res.status(401).json({ error: "Unauthorized" });
             const { limit = 50 } = req.query;
 
             const messages = await db.select()
@@ -52,13 +67,50 @@ export function registerAIChatRoutes(app: Express) {
         }
     });
 
-    app.post("/api/ai/chat", isAuthenticated, requireTier('premium'), async (req: Request, res: Response) => {
+    app.post("/api/ai/chat", isAuthenticated, requireTier('premium'), async (req, res) => {
         try {
-            const userId = req.user.id;
+            const userId = req.user?.id;
+            if (!userId) return res.status(401).json({ error: "Unauthorized" });
             const { message, context } = req.body;
 
-            const [user] = await db.select().from(users).where(eq(users.id, userId));
-            if (user?.isAiChatBlocked) {
+            // OPTIMIZATION: Fetch user, config, and next event in parallel
+            const [userResult, config, eventResult] = await Promise.all([
+                db.select().from(users).where(eq(users.id, userId)).then(r => r[0]),
+                getAiConfig(),
+                (async () => {
+                    const now = Date.now();
+                    if (cachedNextEvent && (now - lastEventFetch < EVENT_CACHE_TTL)) {
+                        return cachedNextEvent;
+                    }
+                    const [event] = await db.select().from(events)
+                        .where(inArray(events.status, ['Upcoming', 'Live']))
+                        .orderBy(events.date)
+                        .limit(1);
+
+                    if (event) {
+                        const fights = await db.select().from(eventFights).where(eq(eventFights.eventId, event.id));
+                        // Batch fetch fighters for these fights
+                        const fighterIds = fights.flatMap(f => [f.fighter1Id, f.fighter2Id]);
+                        const allFighters = await db.select().from(fighters).where(inArray(fighters.id, fighterIds));
+                        const fighterMap = new Map(allFighters.map(f => [f.id, f]));
+
+                        const context = {
+                            event,
+                            fights: fights.slice(0, 5).map(f => ({
+                                ...f,
+                                f1: fighterMap.get(f.fighter1Id),
+                                f2: fighterMap.get(f.fighter2Id)
+                            }))
+                        };
+                        cachedNextEvent = context;
+                        lastEventFetch = now;
+                        return context;
+                    }
+                    return null;
+                })()
+            ]);
+
+            if (userResult?.isAiChatBlocked) {
                 return res.status(403).json({ error: "Access to AI Chat is blocked due to policy violations." });
             }
 
@@ -66,23 +118,26 @@ export function registerAIChatRoutes(app: Express) {
                 return res.status(400).json({ error: "Message cannot be empty" });
             }
 
-            const config = await getAiConfig();
             const { OpenAI } = await import('openai');
             const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
             const moderation = await openai.moderations.create({ input: message });
             if (moderation.results[0].flagged) {
+                const flaggedCategories = Object.entries(moderation.results[0].categories)
+                    .filter(([, value]) => value === true)
+                    .map(([key]) => key)
+                    .join(', ');
                 await db.insert(aiChatLogs).values({
                     userId,
                     message: message.trim(),
                     status: 'blocked',
-                    violationReason: 'OpenAI Moderation Flag: ' + Object.keys(moderation.results[0].categories).filter((k: any) => (moderation.results[0].categories as any)[k]).join(', ')
+                    violationReason: 'OpenAI Moderation Flag: ' + flaggedCategories
                 });
                 return res.status(400).json({ error: "Message violates content policy (Moderation)." });
             }
 
-            const userLang = user?.language || 'en';
-            const userCountry = user?.country || 'Unknown';
+            const userLang = userResult?.language || 'en';
+            const userCountry = userResult?.country || 'Unknown';
 
             const behavior = config['behavior'] || "You are an MMA expert.";
             const functional = config['functional'] || "Discuss only MMA.";
@@ -105,25 +160,12 @@ export function registerAIChatRoutes(app: Express) {
                 }
             }
 
-            try {
-                const [nextEvent] = await db.select().from(events)
-                    .where(inArray(events.status, ['Upcoming', 'Live']))
-                    .orderBy(events.date)
-                    .limit(1);
-
-                if (nextEvent) {
-                    contextInfo += `\n\nUpcoming Event: ${nextEvent.name} (${nextEvent.date}, ${nextEvent.venue})`;
-                    const fights = await db.select().from(eventFights).where(eq(eventFights.eventId, nextEvent.id));
-
-                    const importantFights = fights.slice(0, 5);
-                    for (const fight of importantFights) {
-                        const f1 = await db.select().from(fighters).where(eq(fighters.id, fight.fighter1Id)).then(r => r[0]);
-                        const f2 = await db.select().from(fighters).where(eq(fighters.id, fight.fighter2Id)).then(r => r[0]);
-                        contextInfo += `\nFight: ${f1?.firstName} ${f1?.lastName} vs ${f2?.firstName} ${f2?.lastName} | ${fight.weightClass}`;
-                    }
+            if (eventResult) {
+                const { event, fights } = eventResult;
+                contextInfo += `\n\nUpcoming Event: ${event.name} (${event.date}, ${event.venue})`;
+                for (const fight of fights) {
+                    contextInfo += `\nFight: ${fight.f1?.firstName} ${fight.f1?.lastName} vs ${fight.f2?.firstName} ${fight.f2?.lastName} | ${fight.weightClass}`;
                 }
-            } catch (e) {
-                logger.warn("Auto-context failed", e);
             }
 
             if (contextInfo) {
@@ -136,22 +178,39 @@ export function registerAIChatRoutes(app: Express) {
                 .orderBy(desc(aiChatMessages.createdAt))
                 .limit(10);
 
-            const messages: any[] = [
+            interface ChatMessage {
+                role: 'system' | 'user' | 'assistant';
+                content: string;
+            }
+            const messages: ChatMessage[] = [
                 { role: 'system', content: systemPrompt },
-                ...recentHistory.reverse().map(m => ({ role: m.role, content: m.message })),
+                ...recentHistory.reverse().map(m => ({ role: m.role as 'user' | 'assistant', content: m.message })),
                 { role: 'user', content: message.trim() }
             ];
 
-            const completion = await openai.chat.completions.create({
+            // Set headers for SSE
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            const stream = await openai.chat.completions.create({
                 model: 'gpt-4o-mini',
                 messages,
                 max_tokens: 1000,
                 temperature: 0.7,
+                stream: true,
             });
 
-            const aiResponse = completion.choices[0]?.message?.content || "";
+            let fullAiResponse = "";
+            for await (const chunk of stream) {
+                const content = chunk.choices[0]?.delta?.content || "";
+                if (content) {
+                    fullAiResponse += content;
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                }
+            }
 
-            if (aiResponse.includes("BLOCK_USER")) {
+            if (fullAiResponse.includes("BLOCK_USER")) {
                 await db.update(users).set({ isAiChatBlocked: true }).where(eq(users.id, userId));
                 await db.insert(aiChatLogs).values({
                     userId,
@@ -159,7 +218,9 @@ export function registerAIChatRoutes(app: Express) {
                     status: 'blocked',
                     violationReason: 'AI Triggered Block (Jailbreak/Abuse)'
                 });
-                return res.status(403).json({ error: "Your access to AI chat has been suspended due to policy violations." });
+                res.write(`data: ${JSON.stringify({ error: "Your access to AI chat has been suspended due to policy violations." })}\n\n`);
+                res.end();
+                return;
             }
 
             await db.insert(aiChatLogs).values({
@@ -168,36 +229,42 @@ export function registerAIChatRoutes(app: Express) {
                 status: 'allowed',
             });
 
-            const [userMsg] = await db.insert(aiChatMessages).values({
+            await db.insert(aiChatMessages).values({
                 id: uuidv4(),
                 userId,
                 role: 'user',
                 message: message.trim(),
                 context: context || null,
                 createdAt: new Date(),
-            }).returning();
+            });
 
-            const [aiMsg] = await db.insert(aiChatMessages).values({
+            await db.insert(aiChatMessages).values({
                 id: uuidv4(),
                 userId,
                 role: 'assistant',
-                message: aiResponse,
+                message: fullAiResponse,
                 context: null,
                 createdAt: new Date(),
-            }).returning();
+            });
 
-            res.json({ userMessage: userMsg, aiMessage: aiMsg });
+            res.write(`data: [DONE]\n\n`);
+            res.end();
 
-        } catch (error: any) {
+            // Track usage asynchronously
+            openmeterService.trackUsage(userId, 'ai_chat_message');
+
+        } catch (error) {
             logger.error("AI chat error:", error);
-            if (error.message?.includes('API key')) return res.status(500).json({ error: "AI service not configured" });
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            if (errorMessage.includes('API key')) return res.status(500).json({ error: "AI service not configured" });
             res.status(500).json({ error: "Failed to process AI chat message" });
         }
     });
 
-    app.delete("/api/ai/chat/history", isAuthenticated, requireTier('premium'), async (req: Request, res: Response) => {
+    app.delete("/api/ai/chat/history", isAuthenticated, requireTier('premium'), async (req, res) => {
         try {
-            const userId = req.user.id;
+            const userId = req.user?.id;
+            if (!userId) return res.status(401).json({ error: "Unauthorized" });
             await db.delete(aiChatMessages).where(eq(aiChatMessages.userId, userId));
             res.json({ success: true });
         } catch (error) {

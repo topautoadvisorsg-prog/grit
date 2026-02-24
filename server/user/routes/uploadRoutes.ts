@@ -2,7 +2,7 @@
 import { Express, Request, Response } from "express";
 import fs from "fs";
 import path from "path";
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { logger } from '../../utils/logger';
 
 export function registerUploadRoutes(app: Express) {

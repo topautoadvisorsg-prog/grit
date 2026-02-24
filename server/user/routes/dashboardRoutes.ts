@@ -1,6 +1,6 @@
 import type { Express, Request } from "express";
 
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { db } from "../../db";
 import { users, userPicks, events, eventFights } from "../../../shared/schema";
 import { leaderboardSnapshots } from "../../../shared/models/auth";
@@ -8,9 +8,12 @@ import { eq, desc, sql, and } from "drizzle-orm";
 import { logger } from '../../utils/logger';
 
 export function registerDashboardRoutes(app: Express): void {
-    app.get("/api/me/dashboard", isAuthenticated, async (req: Request, res) => {
+    app.get("/api/me/dashboard", isAuthenticated, async (req, res) => {
         try {
-            const userId = req.user.id;
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: "Unauthorized" });
+            }
 
             // Get user data
             const [user] = await db.select().from(users).where(eq(users.id, userId));
@@ -62,7 +65,7 @@ export function registerDashboardRoutes(app: Express): void {
                 .orderBy(events.date)
                 .limit(1);
 
-            let upcomingEvent = null;
+            let upcomingEvent: { id: string; name: string; date: Date; picksComplete: number; totalFights: number; } | null = null;
             if (upcomingEvents.length > 0) {
                 const evt = upcomingEvents[0];
                 // Count fights in event
@@ -95,7 +98,7 @@ export function registerDashboardRoutes(app: Express): void {
                 { threshold: 250, name: 'Elite Analyst' },
             ];
 
-            let nextBadge = null;
+            let nextBadge: { name: string; progress: number; } | null = null;
             for (const milestone of badgeMilestones) {
                 if (totalPicks < milestone.threshold) {
                     nextBadge = {
@@ -133,6 +136,9 @@ export function registerDashboardRoutes(app: Express): void {
                 totalPicks,
                 nextBadge,
                 upcomingEvent,
+                tier: user.tier,
+                starLevel: user.starLevel,
+                currentPeriodEnd: user.currentPeriodEnd,
             });
         } catch (error) {
             logger.error("Error fetching dashboard:", error);

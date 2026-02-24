@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { db } from '../../db';
 import { userBadges } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
@@ -11,7 +11,7 @@ const router = Router();
 
 router.get('/api/me/badges', isAuthenticated, async (req, res) => {
     try {
-        const userId = (req.user as any)?.id;
+        const userId = req.user?.id;
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -26,7 +26,7 @@ router.get('/api/me/badges', isAuthenticated, async (req, res) => {
 
 router.post('/api/me/badges/unlock', isAuthenticated, validate(unlockBadgeSchema), async (req, res) => {
     try {
-        const userId = (req.user as any)?.id;
+        const userId = req.user?.id;
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -56,8 +56,9 @@ router.post('/api/me/badges/unlock', isAuthenticated, validate(unlockBadgeSchema
             .returning();
 
         res.json({ success: true, message: 'Badge unlocked', badge: newBadge });
-    } catch (error: any) {
-        if (error?.code === '23505') {
+    } catch (error) {
+        const pgError = error as { code?: string };
+        if (pgError?.code === '23505') {
             return res.json({ success: true, message: 'Badge already unlocked' });
         }
         logger.error('Error unlocking badge:', error);

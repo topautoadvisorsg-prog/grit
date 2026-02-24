@@ -3,33 +3,32 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
-}
+import { env } from "../../config/env";
 
 const PgStore = connectPg(session);
+export const sessionStore = new PgStore({
+  conObject: {
+    connectionString: env.DATABASE_URL,
+  },
+  createTableIfMissing: true,
+  ttl: 7 * 24 * 60 * 60,
+});
+
+export const sessionMiddleware = session({
+  secret: env.SESSION_SECRET,
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: "strict",
+  },
+});
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60;
-  return session({
-    secret: process.env.SESSION_SECRET!,
-    store: new PgStore({
-      conObject: {
-        connectionString: process.env.DATABASE_URL,
-      },
-      createTableIfMissing: true,
-      ttl: sessionTtl,
-    }),
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      maxAge: sessionTtl * 1000,
-      sameSite: "lax",
-    },
-  });
+  return sessionMiddleware;
 }
 
 export async function setupAuth(app: Express) {
@@ -48,48 +47,54 @@ export async function setupAuth(app: Express) {
         authorizationURL: `https://replit.com/oidc/auth`,
         tokenURL: `https://replit.com/oidc/token`,
         userInfoURL: `https://replit.com/oidc/userinfo`,
-        clientID: process.env.REPL_ID!,
-        clientSecret: process.env.REPL_ID!,
-        callbackURL: process.env.REPLIT_DEV_DOMAIN
-          ? `https://${process.env.REPLIT_DEV_DOMAIN}/api/callback`
+        clientID: env.REPL_ID || '',
+        clientSecret: env.REPL_ID || '',
+        callbackURL: env.REPLIT_DEV_DOMAIN
+          ? `https://${env.REPLIT_DEV_DOMAIN}/api/callback`
           : "/api/callback",
         scope: "openid email profile",
       },
       async (
         _issuer: string,
-        profile: any,
-        done: (err: any, user?: any) => void
+        profile: { _json?: Record<string, unknown> },
+        done: (err: Error | null, user?: Express.User | false) => void
       ) => {
         try {
-          const claims = profile._json;
+          const claims = profile._json || {};
           const user = await storage.upsertUser({
-            id: claims.sub,
-            email: claims.email || null,
-            firstName: claims.first_name || null,
-            lastName: claims.last_name || null,
-            profileImageUrl: claims.profile_image_url || null,
+            id: String(claims.sub || ''),
+            email: claims.email ? String(claims.email) : null,
+            firstName: claims.first_name ? String(claims.first_name) : null,
+            lastName: claims.last_name ? String(claims.last_name) : null,
+            profileImageUrl: claims.profile_image_url ? String(claims.profile_image_url) : null,
           });
-          done(null, user);
+          done(null, user as Express.User);
         } catch (err) {
-          done(err);
+          done(err instanceof Error ? err : new Error(String(err)), false);
         }
       }
     )
   );
 
-  passport.serializeUser((user: any, done) => {
+  passport.serializeUser((user: Express.User, done) => {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: string, done) => {
+  passport.deserializeUser(async (id: string, done: (err: Error | null, user?: Express.User | false) => void) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user || null);
+      done(null, (user as Express.User) || false);
     } catch (err) {
-      done(err);
+      done(err instanceof Error ? err : new Error(String(err)), false);
     }
   });
+}
 
+/**
+ * Register Replit OIDC login/callback/logout routes.
+ * Calling this function "connects" the Replit OIDC to the application.
+ */
+export function registerReplitOIDCRoutes(app: Express) {
   app.get("/api/login", passport.authenticate("replit"));
 
   app.get(

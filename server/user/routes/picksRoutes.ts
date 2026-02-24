@@ -1,6 +1,6 @@
 import type { Express, Request } from "express";
 
-import { isAuthenticated, isAdmin } from '../../auth/replitAuth';
+import { isAuthenticated, isAdmin } from '../../auth/guards';
 import { db } from "../../db";
 import { userPicks, insertUserPickSchema, events, eventFights } from "../../../shared/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";

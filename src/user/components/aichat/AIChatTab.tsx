@@ -39,23 +39,92 @@ export const AIChatTab: React.FC = () => {
         enabled: isPremium,
     });
 
-    const sendMutation = useMutation({
-        mutationFn: async (message: string) => {
-            const response = await fetchWithAuth('/api/ai/chat', {
+    const [isStreaming, setIsStreaming] = useState(false);
+
+    const handleSend = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isStreaming || !user || !isPremium) return;
+
+        const userMessageText = input.trim();
+        setInput('');
+        setIsStreaming(true);
+
+        const newUserMessage: AiChatMessage = {
+            id: `temp-user-${Date.now()}`,
+            userId: (user as any).id,
+            role: 'user',
+            message: userMessageText,
+            context: null,
+            createdAt: new Date().toISOString(),
+        };
+
+        const tempAiMessage: AiChatMessage = {
+            id: `temp-ai-${Date.now()}`,
+            userId: (user as any).id,
+            role: 'assistant',
+            message: '',
+            context: null,
+            createdAt: new Date().toISOString(),
+        };
+
+        // Optimistically add user message and placeholder AI message
+        queryClient.setQueryData(['/api/ai/chat/history'], (old: AiChatMessage[] = []) => [...(old || []), newUserMessage, tempAiMessage]);
+
+        try {
+            const response = await fetch('/api/ai/chat', {
                 method: 'POST',
-                body: JSON.stringify({ message }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessageText }),
+                credentials: 'include',
             });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Failed to send message');
+
+            if (!response.ok) throw new Error('Failed to start stream');
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedResponse = "";
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.content) {
+                                    accumulatedResponse += parsed.content;
+                                    // Update the temporary AI message in the cache
+                                    queryClient.setQueryData(['/api/ai/chat/history'], (old: AiChatMessage[] = []) => {
+                                        return old.map(m => m.id === tempAiMessage.id ? { ...m, message: accumulatedResponse } : m);
+                                    });
+                                } else if (parsed.error) {
+                                    throw new Error(parsed.error);
+                                }
+                            } catch (e) {
+                                console.error('Error parsing SSE data:', e);
+                            }
+                        }
+                    }
+                }
             }
-            return response.json();
-        },
-        onSuccess: () => {
+
+            // Final sync with server to get permanent IDs
             queryClient.invalidateQueries({ queryKey: ['/api/ai/chat/history'] });
-            setInput('');
-        },
-    });
+        } catch (error: any) {
+            console.error('Streaming error:', error);
+            // Could add error handling UI here
+        } finally {
+            setIsStreaming(false);
+        }
+    };
 
     const clearMutation = useMutation({
         mutationFn: async () => {
@@ -66,16 +135,6 @@ export const AIChatTab: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['/api/ai/chat/history'] });
         },
     });
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || sendMutation.isPending) return;
-        sendMutation.mutate(input.trim());
-    };
 
     if (!user) {
         return (
@@ -178,7 +237,7 @@ export const AIChatTab: React.FC = () => {
                     ))
                 )}
 
-                {sendMutation.isPending && (
+                {isStreaming && (
                     <div className="flex gap-3 animate-fade-in">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                             <Bot className="h-4 w-4 text-primary" />
@@ -186,16 +245,9 @@ export const AIChatTab: React.FC = () => {
                         <div className="bg-muted border border-border rounded-xl px-4 py-3">
                             <div className="flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                <span className="text-sm text-muted-foreground">Analyzing...</span>
+                                <span className="text-sm text-muted-foreground">Streaming...</span>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {sendMutation.isError && (
-                    <div className="flex items-center gap-2 text-destructive text-sm px-4">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{(sendMutation.error as Error).message}</span>
                     </div>
                 )}
 
@@ -203,7 +255,7 @@ export const AIChatTab: React.FC = () => {
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="border-t border-border p-3 bg-muted/20">
+            <form onSubmit={handleSend} className="border-t border-border p-3 bg-muted/20">
                 <div className="flex gap-2">
                     <input
                         type="text"
@@ -211,12 +263,12 @@ export const AIChatTab: React.FC = () => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Ask about fighters, stats, predictions..."
                         className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        disabled={sendMutation.isPending}
+                        disabled={isStreaming}
                     />
                     <Button
                         type="submit"
                         size="sm"
-                        disabled={!input.trim() || sendMutation.isPending}
+                        disabled={!input.trim() || isStreaming}
                         className="px-4"
                     >
                         <Send className="h-4 w-4" />

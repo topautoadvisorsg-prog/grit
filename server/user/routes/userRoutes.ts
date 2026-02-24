@@ -1,6 +1,6 @@
 import type { Express, Request } from "express";
 
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { db } from "../../db";
 import { users, updateUserProfileSchema } from "../../../shared/schema";
 import { eq } from "drizzle-orm";
@@ -9,7 +9,7 @@ import { logger } from '../../utils/logger';
 import { validate } from '../../middleware/validate';
 import { updateProfileSchema } from '../../schemas';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+// Admin authorization is centralized in requireAdmin middleware
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 

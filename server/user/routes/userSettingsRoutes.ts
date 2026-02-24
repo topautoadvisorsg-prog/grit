@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { db } from '../../db';
 import { userSettings } from '../../../shared/schema';
 import { eq } from 'drizzle-orm';

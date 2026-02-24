@@ -1,11 +1,12 @@
 import type { Express, Request, Response } from "express";
-import { isAuthenticated } from '../../auth/replitAuth';
+import { isAuthenticated } from '../../auth/guards';
 import { storage } from "../../storage";
 import { insertFighterSchema, type Fighter } from "../../../shared/schema";
 import { logger } from '../../utils/logger';
 import { parsePagination, paginatedResponse } from '../../utils/pagination';
 
 export function registerFighterRoutes(app: Express) {
+  // Fighters list and detail are public (read-only)
   app.get("/api/fighters", async (req: Request, res: Response) => {
     try {
       const fighters = await storage.getAllFighters();
@@ -34,70 +35,7 @@ export function registerFighterRoutes(app: Express) {
     }
   });
 
-  app.post("/api/fighters", isAuthenticated, async (req, res) => {
-    try {
-      const validationResult = insertFighterSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          error: "Invalid fighter data",
-          details: (validationResult.error as any).errors
-        });
-      }
-
-      const fighter = await storage.createFighter(validationResult.data);
-
-      const fullName = `${fighter.firstName} ${fighter.lastName}`;
-      await storage.linkUnlinkedFightHistory(fullName, fighter.id);
-
-      res.status(201).json(fighter);
-    } catch (error) {
-      logger.error("Error creating fighter:", error);
-      res.status(500).json({ error: "Failed to create fighter" });
-    }
-  });
-
-  app.put("/api/fighters/:id", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const existingFighter = await storage.getFighter(req.params.id as string);
-      if (!existingFighter) {
-        return res.status(404).json({ error: "Fighter not found" });
-      }
-
-      const mergedData = { ...existingFighter, ...req.body, lastUpdated: new Date().toISOString() };
-
-      const validationResult = insertFighterSchema.safeParse(mergedData);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          error: "Invalid fighter data after merge",
-          details: validationResult.error.issues
-        });
-      }
-
-      const fighter = await storage.updateFighter(req.params.id as string, validationResult.data);
-      if (!fighter) {
-        return res.status(500).json({ error: "Failed to update fighter" });
-      }
-      res.json(fighter);
-    } catch (error) {
-      logger.error("Error updating fighter:", error);
-      res.status(500).json({ error: "Failed to update fighter" });
-    }
-  });
-
-  app.delete("/api/fighters/:id", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      await storage.deleteFightHistoryByFighter(req.params.id as string);
-      const deleted = await storage.deleteFighter(req.params.id as string);
-      if (!deleted) {
-        return res.status(404).json({ error: "Fighter not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      logger.error("Error deleting fighter:", error);
-      res.status(500).json({ error: "Failed to delete fighter" });
-    }
-  });
-
+  // Public fight history endpoints
   app.get("/api/fights", async (req: Request, res: Response) => {
     try {
       const fights = await storage.getAllFightHistory();

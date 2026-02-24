@@ -1,23 +1,18 @@
-import type { Express, Request } from "express";
-import { isAuthenticated, requireAdmin } from '../../auth/replitAuth';
-import { db } from "../../db";
-import { users } from "../../../shared/schema";
-import { eq } from "drizzle-orm";
+import type { Express, Request, Response } from "express";
+import { isAuthenticated, requireAdmin } from '../../auth/guards';
 import { logger } from '../../utils/logger';
+import * as adminService from '../../services/adminService';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-
+/**
+ * Admin user management routes.
+ * All business logic delegated to adminService.
+ * Admin access is enforced by requireAdmin middleware.
+ */
 export function registerAdminUserRoutes(app: Express) {
-  app.get("/api/admin/users", isAuthenticated, requireAdmin, async (req: Request, res) => {
+
+  app.get("/api/admin/users", isAuthenticated, requireAdmin, async (_req: Request, res: Response) => {
     try {
-      const userId = req.user.id;
-      const [currentUser] = await db.select().from(users).where(eq(users.id, userId));
-
-      if (!currentUser || (currentUser.role !== "admin" && currentUser.email !== ADMIN_EMAIL)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const allUsers = await db.select().from(users);
+      const allUsers = await adminService.getAllUsers();
       res.json(allUsers);
     } catch (error) {
       logger.error("Error fetching all users:", error);
@@ -25,24 +20,12 @@ export function registerAdminUserRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/users/:id", isAuthenticated, requireAdmin, async (req: Request, res) => {
+  app.patch("/api/admin/users/:id", isAuthenticated, requireAdmin, async (req: Request, res: Response) => {
     try {
-      const currentUserId = req.user.id;
-      const [currentUser] = await db.select().from(users).where(eq(users.id, currentUserId));
-
-      if (!currentUser || (currentUser.role !== "admin" && currentUser.email !== ADMIN_EMAIL)) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
       const { id } = req.params;
       const { role } = req.body;
 
-      const [updatedUser] = await db
-        .update(users)
-        .set({ role, updatedAt: new Date() })
-        .where(eq(users.id, id))
-        .returning();
-
+      const { updatedUser } = await adminService.changeUserRole(id, role);
       res.json(updatedUser);
     } catch (error) {
       logger.error("Error updating user:", error);

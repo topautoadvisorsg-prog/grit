@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/shared/lib/utils';
+import { useSpring, animated } from '@react-spring/web';
 import {
     Target,
     Crown,
@@ -150,24 +151,35 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
 }) => {
     const config = BADGE_CONFIGS[badge];
 
+    const springProps = useSpring({
+        from: { transform: 'scale(1)', opacity: 0 },
+        to: {
+            transform: 'scale(1)',
+            opacity: 1,
+            boxShadow: unlocked ? `0 0 15px ${config.borderColor.split('/')[0].replace('border-', 'var(--')}` : 'none'
+        },
+        config: { tension: 300, friction: 10 }
+    });
+
     if (!config) {
         return null;
     }
 
     return (
         <div className={cn('flex flex-col items-center gap-1', className)}>
-            <div
+            <animated.div
+                style={springProps}
                 className={cn(
-                    'rounded-full border-2 transition-all duration-300',
+                    'rounded-full border-2 transition-all duration-500 cursor-default hover:scale-110',
                     sizeClasses[size],
                     iconSizeClasses[size],
                     unlocked
-                        ? [config.bgColor, config.borderColor, config.color]
+                        ? [config.bgColor, config.borderColor, config.color, 'shadow-lg']
                         : 'bg-muted/50 border-muted text-muted-foreground grayscale opacity-50'
                 )}
             >
                 {config.icon}
-            </div>
+            </animated.div>
             {showLabel && (
                 <span
                     className={cn(

@@ -85,6 +85,12 @@ export const muteUserSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
+export const createCheckoutSessionSchema = z.object({
+  priceId: z.string().min(1),
+  successUrl: z.string().url(),
+  cancelUrl: z.string().url(),
+});
+
 export const unlockBadgeSchema = z.object({
   badgeId: z.string().min(1),
 });

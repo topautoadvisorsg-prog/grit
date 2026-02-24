@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
+import { logger } from '../utils/logger';
+import { anthropicService } from '../services/anthropicService';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || 'not-configured',
+    apiKey: process.env.OPEN_AI_KEY || process.env.OPENAI_API_KEY || 'not-configured',
 });
 
 export interface AIPrediction {
@@ -63,33 +65,50 @@ export async function generatePrediction(
     context: FightContext
 ): Promise<AIPrediction> {
     const prompt = buildPrompt(context);
-
-    const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-            {
-                role: 'system',
-                content: `You are an expert MMA analyst providing fight predictions. 
+    const systemPrompt = `You are an expert MMA analyst providing fight predictions. 
                 Analyze the fighters' records, styles, recent performances, and physical attributes.
-                Be objective and data-driven. Return your analysis in the specified JSON format.`
-            },
-            {
-                role: 'user',
-                content: prompt
-            }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        max_tokens: 1000,
-    });
+                Be objective and data-driven. Return your analysis in the specified JSON format.`;
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-        throw new Error('No response from AI');
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: prompt }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.7,
+            max_tokens: 1000,
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) throw new Error('No response from OpenAI');
+
+        const parsed = JSON.parse(content);
+        return formatPrediction(fightId, context, parsed, 'gpt-4o-mini');
+
+    } catch (openaiError) {
+        logger.warn('OpenAI prediction failed, trying Anthropic fallback...', openaiError);
+
+        try {
+            const anthropicResponse = await anthropicService.generateMessage(systemPrompt, prompt);
+            const content = (anthropicResponse.content[0] as any).text;
+            if (!content) throw new Error('No response from Anthropic');
+
+            // Anthropic doesn't support response_format: 'json_object' natively in the same way,
+            // so we might need to extract JSON if it's wrapped in markers.
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+
+            return formatPrediction(fightId, context, parsed, 'claude-3-5-sonnet');
+        } catch (anthropicError) {
+            logger.error('Both OpenAI and Anthropic predictions failed');
+            throw anthropicError;
+        }
     }
+}
 
-    const parsed = JSON.parse(content);
-
+function formatPrediction(fightId: string, context: FightContext, parsed: any, model: string): AIPrediction {
     return {
         fightId,
         fighter1: {
@@ -106,7 +125,7 @@ export async function generatePrediction(
         confidence: parsed.confidence || 'medium',
         keyFactors: parsed.keyFactors || [],
         analysis: parsed.analysis || '',
-        model: 'gpt-4o-mini',
+        model: model,
         generatedAt: new Date(),
     };
 }

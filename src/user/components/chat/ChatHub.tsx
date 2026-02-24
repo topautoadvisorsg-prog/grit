@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/utils';
+import { useSocket } from '@/shared/hooks/use-socket';
 
 type ChatType = 'global' | 'event' | 'country';
 
@@ -47,11 +48,46 @@ export const ChatHub: React.FC = () => {
         ? `/api/chat?chat_type=country&country_code=${encodeURIComponent(userCountry)}`
         : `/api/chat?chat_type=global`;
 
-    const { data: messages = [], isLoading, refetch } = useQuery<ChatMessage[]>({
-        queryKey: [`/api/chat`, activeChatType, userCountry],
+    const queryKey = [`/api/chat`, activeChatType, userCountry];
+
+    const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
+        queryKey,
         queryFn: () => fetch(queryUrl).then(r => r.json()),
-        refetchInterval: 5000, // Poll every 5s
     });
+
+    const socket = useSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        // Join appropriate room
+        if (activeChatType === 'country' && userCountry) {
+            socket.emit('join_country_chat', userCountry);
+        }
+
+        const handleNewMessage = (newMessage: ChatMessage) => {
+            // Check if message belongs to current chat context
+            const isMatch = (activeChatType === 'global' && newMessage.chatType === 'global') ||
+                (activeChatType === 'country' && newMessage.chatType === 'country' && newMessage.countryCode === userCountry);
+
+            if (isMatch) {
+                queryClient.setQueryData(queryKey, (oldMessages: ChatMessage[] = []) => {
+                    // Avoid duplicates
+                    if (oldMessages.find(m => m.id === newMessage.id)) return oldMessages;
+                    return [newMessage, ...oldMessages];
+                });
+            }
+        };
+
+        socket.on('new_message', handleNewMessage);
+
+        return () => {
+            if (activeChatType === 'country' && userCountry) {
+                socket.emit('leave_room', `country_${userCountry}`);
+            }
+            socket.off('new_message', handleNewMessage);
+        };
+    }, [socket, activeChatType, userCountry, queryClient, queryKey]);
 
     const sendMutation = useMutation({
         mutationFn: async (message: string) => {
@@ -76,7 +112,7 @@ export const ChatHub: React.FC = () => {
             return response.json();
         },
         onSuccess: () => {
-            refetch();
+            // queryClient.invalidateQueries({ queryKey }); // Optional, socket will push it
             setInput('');
         },
     });
@@ -89,6 +125,49 @@ export const ChatHub: React.FC = () => {
         e.preventDefault();
         if (!input.trim() || sendMutation.isPending || !user) return;
         sendMutation.mutate(input.trim());
+    };
+
+    const [typingUsers, setTypingUsers] = useState<string[]>([]);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const currentRoom = activeChatType === 'global' ? 'global' : `country_${userCountry}`;
+
+        const handleUserTyping = (data: { username: string, room: string }) => {
+            if (data.room === currentRoom) {
+                setTypingUsers(prev => prev.includes(data.username) ? prev : [...prev, data.username]);
+            }
+        };
+
+        const handleUserStopTyping = (data: { username: string, room: string }) => {
+            if (data.room === currentRoom) {
+                setTypingUsers(prev => prev.filter(u => u !== data.username));
+            }
+        };
+
+        socket.on('user_typing', handleUserTyping);
+        socket.on('user_stop_typing', handleUserStopTyping);
+
+        return () => {
+            socket.off('user_typing', handleUserTyping);
+            socket.off('user_stop_typing', handleUserStopTyping);
+        };
+    }, [socket, activeChatType, userCountry]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+        if (!socket) return;
+
+        const currentRoom = activeChatType === 'global' ? 'global' : `country_${userCountry}`;
+
+        socket.emit('typing', { room: currentRoom });
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit('stop_typing', { room: currentRoom });
+        }, 2000);
     };
 
     return (
@@ -163,14 +242,19 @@ export const ChatHub: React.FC = () => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            {user ? (
-                <form onSubmit={handleSubmit} className="border-t border-border p-3 bg-muted/20">
-                    <div className="flex gap-2">
+            {/* Input & Typing Indicators */}
+            <div className="border-t border-border p-3 bg-muted/20">
+                {typingUsers.length > 0 && (
+                    <div className="text-[10px] text-muted-foreground mb-1 animate-pulse">
+                        {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+                    </div>
+                )}
+                {user ? (
+                    <form onSubmit={handleSubmit} className="flex gap-2">
                         <input
                             type="text"
                             value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            onChange={handleInputChange}
                             placeholder={`Message ${activeChatType === 'country' ? userCountry : 'global'} chat...`}
                             className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             maxLength={1000}
@@ -184,18 +268,13 @@ export const ChatHub: React.FC = () => {
                         >
                             <Send className="h-4 w-4" />
                         </Button>
+                    </form>
+                ) : (
+                    <div className="text-center py-1">
+                        <p className="text-sm text-muted-foreground">Sign in to start chatting</p>
                     </div>
-                    {sendMutation.isError && (
-                        <p className="text-xs text-destructive mt-1">
-                            {(sendMutation.error as Error).message}
-                        </p>
-                    )}
-                </form>
-            ) : (
-                <div className="border-t border-border p-4 text-center bg-muted/20">
-                    <p className="text-sm text-muted-foreground">Sign in to start chatting</p>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
