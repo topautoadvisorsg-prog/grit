@@ -120,6 +120,12 @@ async function startServer() {
   app.use(paymentRouter);
   app.use('/api/system', heartbeatRouter);
 
+  // Global Error Handler to guarantee no stack trace leaks
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error(err);
+    res.status(err.status || 500).json({ message: err.message || "Internal Server Error" });
+  });
+
   const PORT = process.env.PORT || 3001;
   const server = app.listen(PORT, () => {
     logger.info(`API server running on port ${PORT}`);
@@ -129,3 +135,4 @@ async function startServer() {
 }
 
 startServer().catch((err) => logger.error(err));
+

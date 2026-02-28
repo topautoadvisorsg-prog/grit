@@ -41,6 +41,12 @@ export const AIChatTab: React.FC = () => {
 
     const [isStreaming, setIsStreaming] = useState(false);
 
+    // Auto-scroll to bottom on new messages or during streaming
+    useEffect(() => {
+        // Use 'auto' behavior during streaming to prevent smooth-scroll jitter
+        messagesEndRef.current?.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth' });
+    }, [messages, isStreaming]);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || isStreaming || !user || !isPremium) return;
@@ -168,30 +174,50 @@ export const AIChatTab: React.FC = () => {
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[700px] bg-card rounded-xl border border-border overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-sm">MMA Analysis AI</h3>
-                    <span className="text-xs text-muted-foreground">• Ask about fighters, stats & predictions</span>
+            <div className="flex flex-col border-b border-border bg-muted/30">
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                        <Bot className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">MMA Analysis AI</h3>
+                        <span className="text-xs text-muted-foreground hidden sm:inline-block">• Ask about fighters, stats & predictions</span>
+                    </div>
+                    {messages.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => clearMutation.mutate()}
+                            disabled={clearMutation.isPending}
+                            className="text-muted-foreground hover:text-destructive"
+                            title="Clear Chat History"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
-                {messages.length > 0 && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => clearMutation.mutate()}
-                        disabled={clearMutation.isPending}
-                        className="text-muted-foreground hover:text-destructive"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                )}
+                {/* Context Indicator */}
+                <div className="px-4 py-1.5 bg-primary/5 border-t border-primary/10 flex items-center gap-2">
+                    <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80">
+                        Context: Global Fight Database Connected
+                    </span>
+                </div>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <div className="flex flex-col gap-4 py-4 w-full">
+                        <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 animate-pulse border border-primary/20" />
+                            <div className="h-16 w-[70%] bg-muted rounded-xl animate-pulse" />
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                            <div className="h-10 w-[40%] bg-primary/20 rounded-xl animate-pulse" />
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 animate-pulse border border-primary/20" />
+                            <div className="h-24 w-[85%] bg-muted rounded-xl animate-pulse" />
+                        </div>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -202,53 +228,60 @@ export const AIChatTab: React.FC = () => {
                         </p>
                     </div>
                 ) : (
-                    messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={cn(
-                                "flex gap-3 animate-fade-in",
-                                msg.role === 'user' ? "justify-end" : "justify-start"
-                            )}
-                        >
-                            {msg.role === 'assistant' && (
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <Bot className="h-4 w-4 text-primary" />
-                                </div>
-                            )}
+                    messages.map((msg) => {
+                        const isTempAiMessage = isStreaming && msg.id.startsWith('temp-ai-');
+
+                        return (
                             <div
+                                key={msg.id}
                                 className={cn(
-                                    "max-w-[75%] rounded-xl px-4 py-3 text-sm",
-                                    msg.role === 'user'
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted border border-border text-foreground"
+                                    "flex gap-3 animate-fade-in w-full",
+                                    msg.role === 'user' ? "justify-end" : "justify-start"
                                 )}
                             >
-                                <p className="whitespace-pre-wrap">{msg.message}</p>
-                                <span className="text-[10px] opacity-60 mt-1 block">
-                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </div>
-                            {msg.role === 'user' && (
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                    <User className="h-4 w-4 text-muted-foreground" />
+                                {msg.role === 'assistant' && (
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <Bot className={cn("h-4 w-4 text-primary", isTempAiMessage && "animate-pulse")} />
+                                    </div>
+                                )}
+                                <div
+                                    className={cn(
+                                        "rounded-xl px-4 py-3 text-sm transition-all duration-300",
+                                        msg.role === 'user'
+                                            ? "bg-primary text-primary-foreground max-w-[85%]"
+                                            : "bg-muted border border-border text-foreground w-full max-w-[90%] min-h-[44px]"
+                                    )}
+                                >
+                                    {isTempAiMessage && !msg.message ? (
+                                        <div className="flex items-center gap-2 h-full opacity-60">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col sm:flex-row gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {!isTempAiMessage && (
+                                        <span className={cn(
+                                            "text-[10px] opacity-60 mt-1 block",
+                                            msg.role === 'assistant' && "text-right"
+                                        )}>
+                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))
-                )}
-
-                {isStreaming && (
-                    <div className="flex gap-3 animate-fade-in">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Bot className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="bg-muted border border-border rounded-xl px-4 py-3">
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                <span className="text-sm text-muted-foreground">Streaming...</span>
+                                {msg.role === 'user' && (
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    </div>
+                        );
+                    })
                 )}
 
                 <div ref={messagesEndRef} />

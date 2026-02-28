@@ -20,7 +20,8 @@ import {
     Award,
     Ticket,
     TrendingUp,
-    Info
+    Info,
+    Settings
 } from 'lucide-react';
 
 export interface NavItem {
@@ -58,6 +59,9 @@ export const adminNavItems: NavItem[] = [
     { id: 'admin-raffle', labelKey: 'sidebar.raffle_manager', icon: Ticket },
     { id: 'admin-verification', labelKey: 'sidebar.user_verification', icon: BadgeCheck },
     { id: 'admin-odds', labelKey: 'sidebar.odds_editor', icon: TrendingUp },
+    { id: 'admin-users', labelKey: 'sidebar.user_manager', icon: User },
+    { id: 'admin-audit', labelKey: 'sidebar.audit_log', icon: History },
+    { id: 'admin-settings', labelKey: 'sidebar.system_settings', icon: Settings },
 ];
 
 // Tab Titles Helper
@@ -88,4 +92,7 @@ export const tabTitles: Record<string, { title: string; subtitle: string }> = {
     'admin-raffle': { title: 'Raffle Manager', subtitle: 'Admin - Manage raffle tickets & draws' },
     'admin-verification': { title: 'User Verification', subtitle: 'Admin - Verify users & feature influencers' },
     'admin-odds': { title: 'Odds Editor', subtitle: 'Admin - Set fight odds per event' },
+    'admin-users': { title: 'User Manager', subtitle: 'Admin - Manage platform users' },
+    'admin-audit': { title: 'Audit Log', subtitle: 'Admin - View system activity logs' },
+    'admin-settings': { title: 'System Settings', subtitle: 'Admin - Configure system-wide settings' },
 };

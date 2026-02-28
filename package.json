@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"tsx server/index.ts\" \"vite\"",
+    "dev": "concurrently \"tsx server/user-server.ts\" \"tsx server/admin-server.ts\" \"vite\"",
     "dev:frontend": "vite",
-    "dev:backend": "tsx server/index.ts",
+    "dev:backend-user": "tsx server/user-server.ts",
+    "dev:backend-admin": "tsx server/admin-server.ts",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

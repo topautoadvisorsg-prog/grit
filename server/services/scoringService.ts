@@ -7,9 +7,12 @@ import {
     events,
     fighters,
     fightHistory,
+    userKeys,
+    badgeAudit,
 } from "../../shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, count, ne, gt } from "drizzle-orm";
 import { logger } from '../utils/logger';
+import { v4 as uuidv4 } from "uuid";
 
 // ──────────────────────────────────────
 // Scoring Functions
@@ -102,6 +105,8 @@ export async function finalizeFightResult(fightId: string, resultData: any) {
             throw new Error('FIGHT_NOT_FOUND');
         }
 
+        const eventId = fight.eventId;
+
         // Create or update fight result
         const [existingResult] = await tx
             .select()
@@ -110,16 +115,8 @@ export async function finalizeFightResult(fightId: string, resultData: any) {
 
         let fightResult;
         if (existingResult) {
-            [fightResult] = await tx
-                .update(fightResults)
-                .set({
-                    ...resultData,
-                    fightId,
-                    completedAt: new Date(),
-                    updatedAt: new Date(),
-                })
-                .where(eq(fightResults.id, existingResult.id))
-                .returning();
+            // Re-finalization is explicitly hard-blocked for integrity
+            throw new Error('FIGHT_ALREADY_FINALIZED');
         } else {
             [fightResult] = await tx
                 .insert(fightResults)
@@ -191,6 +188,9 @@ export async function finalizeFightResult(fightId: string, resultData: any) {
                 .update(users)
                 .set({ totalPoints, updatedAt: new Date() })
                 .where(eq(users.id, userId));
+
+            // NEW: Clean Sweep Detection
+            await checkEventCleanSweep(tx, eventId, userId);
         }
 
         // Get event data for fight history
@@ -369,4 +369,93 @@ export async function finalizeFightResult(fightId: string, resultData: any) {
 
         return fightResult;
     }); // end transaction
+}
+
+/**
+ * Check if a user has achieved a "Clean Sweep" for an event.
+ * Award a Key if 100% accuracy achieved.
+ * Unlock "Ultra Badge" if 5 Keys collected.
+ */
+async function checkEventCleanSweep(tx: any, eventId: string, userId: string) {
+    logger.debug(`[Clean Sweep] Checking sweep for user ${userId} on event ${eventId}`);
+
+    // 1. Get total non-cancelled fights in event
+    const eventFightsData = await tx.select({ count: sql<number>`count(*)` })
+        .from(eventFights)
+        .where(and(
+            eq(eventFights.eventId, eventId),
+            ne(eventFights.status, 'Cancelled')
+        ));
+
+    const totalFights = Number(eventFightsData[0]?.count || 0);
+    if (totalFights === 0) return;
+
+    // 2. Count user's correct picks (points > 0 means fighter guess was right)
+    // We only care about picks for this event's fights
+    const userCorrectPicksData = await tx.select({ count: sql<number>`count(*)` })
+        .from(userPicks)
+        .innerJoin(eventFights, eq(userPicks.fightId, eventFights.id))
+        .where(and(
+            eq(eventFights.eventId, eventId),
+            eq(userPicks.userId, userId),
+            gt(userPicks.pointsAwarded, 0)
+        ));
+
+    const correctPicksCount = Number(userCorrectPicksData[0]?.count || 0);
+
+    logger.debug(`[Clean Sweep] User ${userId}: ${correctPicksCount}/${totalFights} correct`);
+
+    if (correctPicksCount === totalFights) {
+        // ACHIEVED CLEAN SWEEP!
+
+        // 3. Award Key (Unique constraint on userId, eventId handles idempotency)
+        try {
+            await tx.insert(userKeys).values({
+                id: uuidv4(),
+                userId,
+                eventId,
+                awardedAt: new Date()
+            }).onConflictDoNothing();
+
+            logger.info(`[Clean Sweep] KEY AWARDED to user ${userId} for event ${eventId}`);
+
+            // 4. Check for Ultra Badge milestone (5 Keys)
+            const userKeysData = await tx.select({ count: sql<number>`count(*)` })
+                .from(userKeys)
+                .where(eq(userKeys.userId, userId));
+
+            const totalKeys = Number(userKeysData[0]?.count || 0);
+
+            if (totalKeys === 5) {
+                // Milestone reached!
+                // Check if already awarded to prevent duplicate logs (though audit is fine)
+                const [existingAudit] = await tx.select()
+                    .from(badgeAudit)
+                    .where(and(
+                        eq(badgeAudit.userId, userId),
+                        eq(badgeAudit.badgeType, 'ultra_badge')
+                    ));
+
+                if (!existingAudit) {
+                    await tx.insert(badgeAudit).values({
+                        id: uuidv4(),
+                        userId,
+                        badgeType: 'ultra_badge',
+                        triggerEventId: eventId,
+                        triggeredAt: new Date()
+                    });
+
+                    // Update user progressBadge to 'ultra' or similar if we decide to use it
+                    await tx.update(users)
+                        .set({ progressBadge: 'ultra', updatedAt: new Date() })
+                        .where(eq(users.id, userId));
+
+                    logger.info(`[Milestone] ULTRA BADGE UNLOCKED for user ${userId}`);
+                }
+            }
+        } catch (err) {
+            // Handle unique constraint violation gracefully just in case logic fails
+            logger.debug(`[Clean Sweep] Key already exists or error: ${err}`);
+        }
+    }
 }

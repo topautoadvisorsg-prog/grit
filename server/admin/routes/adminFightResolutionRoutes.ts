@@ -27,6 +27,9 @@ export function registerAdminFightResolutionRoutes(app: Express): void {
             if (error.message === 'FIGHT_NOT_FOUND') {
                 return res.status(404).json({ message: "Fight not found" });
             }
+            if (error.message === 'FIGHT_ALREADY_FINALIZED') {
+                return res.status(409).json({ message: "Fight has already been finalized. Re-finalization is blocked for integrity." });
+            }
             logger.error("Error saving fight result:", error);
             res.status(500).json({ message: "Failed to save fight result" });
         }

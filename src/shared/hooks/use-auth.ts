@@ -42,7 +42,7 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
     logout: logoutMutation.mutate,
-    login: () => { window.open("/api/login", "_self"); },
+    login: () => { window.location.href = "/api/login"; },
     isLoggingOut: logoutMutation.isPending,
   };
 }

@@ -506,6 +506,36 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+/**
+ * User Keys - awarded for "Clean Sweeps" (100% accuracy on an event)
+ * Prestige currency for unlocking special badges.
+ */
+export const userKeys = pgTable("user_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull(),
+  eventId: uuid("event_id").notNull(),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userEventUnique: sql`unique(${table.userId}, ${table.eventId})`
+  };
+});
+
+/**
+ * Badge Audit - tracks when and why a badge was awarded
+ */
+export const badgeAudit = pgTable("badge_audit", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull(),
+  badgeType: varchar("badge_type", { length: 100 }).notNull(),
+  triggerEventId: uuid("trigger_event_id"), // event that triggered the milestone
+  triggeredAt: timestamp("triggered_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    userBadgeUnique: sql`unique(${table.userId}, ${table.badgeType})`
+  };
+});
+
 // Insert schemas
 export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({ id: true, createdAt: true, updatedAt: true });
 
@@ -545,6 +575,8 @@ export const insertRaffleDrawSchema = createInsertSchema(raffleDraws).omit({ id:
 export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: true, createdAt: true });
 export const insertAiChatConfigSchema = createInsertSchema(aiChatConfig).omit({ id: true, updatedAt: true });
 export const insertAiChatLogSchema = createInsertSchema(aiChatLogs).omit({ id: true, createdAt: true });
+export const insertUserKeySchema = createInsertSchema(userKeys).omit({ id: true, awardedAt: true });
+export const insertBadgeAuditSchema = createInsertSchema(badgeAudit).omit({ id: true, triggeredAt: true });
 
 // Types
 export type Fighter = typeof fighters.$inferSelect;
@@ -583,4 +615,7 @@ export type AiChatConfig = typeof aiChatConfig.$inferSelect;
 export type InsertAiChatConfig = z.infer<typeof insertAiChatConfigSchema>;
 export type AiChatLog = typeof aiChatLogs.$inferSelect;
 export type InsertAiChatLog = z.infer<typeof insertAiChatLogSchema>;
-
+export type UserKey = typeof userKeys.$inferSelect;
+export type InsertUserKey = z.infer<typeof insertUserKeySchema>;
+export type BadgeAudit = typeof badgeAudit.$inferSelect;
+export type InsertBadgeAudit = z.infer<typeof insertBadgeAuditSchema>;

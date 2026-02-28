@@ -193,6 +193,16 @@ export function registerAIChatRoutes(app: Express) {
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
 
+            let streamAborted = false;
+            req.on('close', () => {
+                if (!res.writableEnded) {
+                    streamAborted = true;
+                    logger.warn(`[AI Stream] Aborted for user ${userId}`);
+                }
+            });
+
+            logger.info(`[AI Stream] Started for user ${userId}`);
+
             const stream = await openai.chat.completions.create({
                 model: 'gpt-4o-mini',
                 messages,
@@ -249,6 +259,10 @@ export function registerAIChatRoutes(app: Express) {
 
             res.write(`data: [DONE]\n\n`);
             res.end();
+
+            if (!streamAborted) {
+                logger.info(`[AI Stream] Completed for user ${userId}`);
+            }
 
             // Track usage asynchronously
             openmeterService.trackUsage(userId, 'ai_chat_message');

@@ -18,7 +18,21 @@ interface ChatMessage {
     countryCode: string | null;
     message: string;
     createdAt: string;
+    superChat?: {
+        tier: 'blue' | 'green' | 'gold' | 'magenta';
+        amount: number;
+    };
 }
+
+const getTierStyles = (tier?: string) => {
+    switch (tier) {
+        case 'magenta': return 'bg-fuchsia-600/20 border-fuchsia-500/50 text-fuchsia-100 shadow-[0_0_15px_rgba(192,38,211,0.2)]';
+        case 'gold': return 'bg-amber-500/20 border-amber-400/50 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]';
+        case 'green': return 'bg-emerald-500/20 border-emerald-400/50 text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.2)]';
+        case 'blue': return 'bg-blue-500/20 border-blue-400/50 text-blue-100 shadow-[0_0_15px_rgba(59,130,246,0.2)]';
+        default: return 'bg-muted border border-border text-foreground';
+    }
+};
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
     return fetch(url, {
@@ -202,6 +216,26 @@ export const ChatHub: React.FC = () => {
                 })}
             </div>
 
+            {/* Pinned Super Chats Area */}
+            {messages.some(m => m.superChat) && (
+                <div className="flex flex-col gap-2 p-2 max-h-[120px] overflow-y-auto border-b border-border bg-background/50 backdrop-blur-sm z-10 transition-all duration-500">
+                    {messages.filter(m => m.superChat).slice(0, 3).map(msg => (
+                        <div key={`pinned-${msg.id}`} className={cn(
+                            "flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium animate-in slide-in-from-top-2 fade-in duration-300",
+                            getTierStyles(msg.superChat?.tier)
+                        )}>
+                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-background/50 flex items-center justify-center">
+                                ★
+                            </div>
+                            <div className="flex-1 min-w-0 truncate">
+                                <span className="opacity-80 font-bold mr-1">${msg.superChat?.amount.toFixed(2)}</span>
+                                <span className="opacity-90">{msg.message}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {isLoading ? (
@@ -216,22 +250,35 @@ export const ChatHub: React.FC = () => {
                 ) : (
                     [...messages].reverse().map((msg) => {
                         const isOwn = msg.userId === (user as any)?.id;
+                        const isSuperChat = !!msg.superChat;
+
                         return (
                             <div
                                 key={msg.id}
                                 className={cn(
-                                    "flex",
+                                    "flex animate-in slide-in-from-bottom-2 fade-in duration-300",
                                     isOwn ? "justify-end" : "justify-start"
                                 )}
                             >
                                 <div className={cn(
-                                    "max-w-[75%] rounded-xl px-4 py-2.5 text-sm",
-                                    isOwn
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted border border-border text-foreground"
+                                    "max-w-[85%] rounded-xl px-4 py-2.5 text-sm transition-all duration-300",
+                                    isSuperChat
+                                        ? cn("border", getTierStyles(msg.superChat?.tier))
+                                        : isOwn
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted border border-border text-foreground"
                                 )}>
-                                    <p className="whitespace-pre-wrap">{msg.message}</p>
-                                    <span className="text-[10px] opacity-60 mt-1 block">
+                                    {isSuperChat && (
+                                        <div className="font-bold mb-1 opacity-90 text-xs flex items-center gap-1">
+                                            <span>★ Super Chat •</span>
+                                            <span>${msg.superChat?.amount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                                    <span className={cn(
+                                        "text-[10px] mt-1.5 block",
+                                        isSuperChat ? "opacity-70" : "opacity-60"
+                                    )}>
                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>

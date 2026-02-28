@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Calendar, MapPin, Trophy, Users, ArrowLeft, Loader2 } from 'lucide-react';
 import { EventCardPage } from './EventCardPage';
 import { Event, EventFight } from '@/shared/types/fighter';
+import { cn } from '@/shared/lib/utils';
 
 interface DbEvent {
   id: string;
@@ -101,11 +102,11 @@ export const EventListPage = () => {
     try {
       const [year, month, day] = dateStr.split('-').map(Number);
       const date = new Date(year, month - 1, day);
-      return date.toLocaleDateString('en-US', { 
+      return date.toLocaleDateString('en-US', {
         weekday: 'short',
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
       });
     } catch {
       return dateStr;
@@ -114,9 +115,9 @@ export const EventListPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Upcoming': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-      case 'Live': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'Completed': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'Upcoming': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50';
+      case 'Live': return 'bg-red-500/20 text-red-400 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)] animate-pulse';
+      case 'Completed': return 'bg-zinc-500/20 text-zinc-400 border-zinc-500/50';
       case 'Cancelled': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
       default: return 'bg-muted text-muted-foreground';
     }
@@ -136,8 +137,8 @@ export const EventListPage = () => {
       const frontendEvent = transformDbEventToFrontend(selectedEventData);
       return (
         <div className="space-y-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => setSelectedEventId(null)}
             className="mb-2"
             data-testid="button-back-to-events"
@@ -182,7 +183,7 @@ export const EventListPage = () => {
 
       <div className="grid gap-4">
         {events.map(event => (
-          <Card 
+          <Card
             key={event.id}
             className="cursor-pointer hover-elevate transition-all"
             onClick={() => setSelectedEventId(event.id)}
@@ -192,16 +193,16 @@ export const EventListPage = () => {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className={getStatusColor(event.status)}>
-                      {event.status}
+                    <Badge variant="outline" className={cn(getStatusColor(event.status), "font-black tracking-widest uppercase tabular-nums")}>
+                      {event.status === 'Upcoming' ? 'OPEN' : event.status === 'Completed' ? 'CLOSED' : 'LIVE'}
                     </Badge>
                     <Badge variant="outline">{event.organization}</Badge>
                   </div>
-                  
+
                   <h3 className="text-lg font-bold text-foreground truncate" data-testid={`text-event-name-${event.id}`}>
                     {event.name}
                   </h3>
-                  
+
                   <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />

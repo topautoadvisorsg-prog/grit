@@ -105,6 +105,13 @@ export function registerPicksRoutes(app: Express): void {
         if (event.status !== 'Upcoming' && !isAdmin(req)) {
           return res.status(400).json({ message: "Picks can only be modified when event status is 'Upcoming'" });
         }
+
+        // Hard time-based lock (>= official start time)
+        const now = new Date();
+        const eventDate = new Date(event.date);
+        if (now >= eventDate && !isAdmin(req)) {
+          return res.status(400).json({ message: "Picks are locked. The event has officially started." });
+        }
       }
 
       // Check for existing pick
@@ -169,8 +176,17 @@ export function registerPicksRoutes(app: Express): void {
           .from(events)
           .where(eq(events.id, fight.eventId));
 
-        if (event && event.status !== 'Upcoming') {
-          return res.status(400).json({ message: "Picks can only be deleted when event status is 'Upcoming'" });
+        if (event) {
+          if (event.status !== 'Upcoming') {
+            return res.status(400).json({ message: "Picks can only be deleted when event status is 'Upcoming'" });
+          }
+
+          // Hard time-based lock (>= official start time)
+          const now = new Date();
+          const eventDate = new Date(event.date);
+          if (now >= eventDate) {
+            return res.status(400).json({ message: "Picks are locked. The event has officially started." });
+          }
         }
       }
 

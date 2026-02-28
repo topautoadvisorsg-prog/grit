@@ -55,6 +55,14 @@ export async function postMessage(userId: string, message: string, options: {
 }) {
     const { chatType = 'global', eventId, countryCode } = options;
 
+    if (!message || message.trim().length === 0) {
+        throw new Error('MESSAGE_EMPTY');
+    }
+
+    if (message.length > 500) {
+        throw new Error('MESSAGE_TOO_LONG');
+    }
+
     let resolvedCountryCode: string | null = null;
 
     if (chatType === 'country') {

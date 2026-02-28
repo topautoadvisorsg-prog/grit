@@ -73,10 +73,18 @@ export const EventCountdown: React.FC<EventCountdownProps> = ({
                         </div>
                     </div>
                     <Link to={`/`}>
-                        <Button variant="destructive" size="sm">
+                        <Button variant="destructive" size="sm" className="font-bold">
                             Watch Live
                         </Button>
                     </Link>
+                </div>
+
+                {/* Picks Locked banner for Live */}
+                <div className="mt-4 pt-3 border-t border-red-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 bg-red-500/5 -mx-4 -mb-4 px-4 py-3 rounded-b-xl">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-red-300">🔒 PICKS LOCKED</span>
+                        <span className="text-xs text-muted-foreground hidden sm:inline-block">You can no longer edit your predictions.</span>
+                    </div>
                 </div>
             </div>
         );
@@ -117,17 +125,17 @@ export const EventCountdown: React.FC<EventCountdownProps> = ({
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                            {picksComplete}/{totalPicks} picks made
+                        <span className="text-sm font-medium text-muted-foreground tabular-nums">
+                            {picksComplete} / {totalPicks} PICKS
                         </span>
                     </div>
                     {picksComplete < totalPicks && (
-                        <Button size="sm" onClick={onMakePicks}>
-                            Make Picks
+                        <Button size="sm" onClick={onMakePicks} className="font-bold shadow-sm hover:-translate-y-0.5 transition-transform">
+                            {picksComplete === 0 ? 'Make Picks' : 'Finish Picks'}
                         </Button>
                     )}
                     {picksComplete === totalPicks && (
-                        <span className="text-sm text-green-400">✓ All picks locked</span>
+                        <span className="text-sm font-bold text-green-400 bg-green-500/10 px-2 py-1 rounded-md">✓ ALL PICKS LOCKED</span>
                     )}
                 </div>
             )}
@@ -144,12 +152,12 @@ const TimeBlock: React.FC<{ value: number; label: string; isUrgent?: boolean }> 
     <div className="text-center">
         <div
             className={cn(
-                'text-2xl font-bold rounded-lg p-2',
-                isUrgent ? 'text-orange-400 bg-orange-500/10' : 'text-foreground bg-muted'
+                'text-2xl font-bold rounded-lg p-2 tabular-nums tracking-tight border',
+                isUrgent ? 'text-orange-400 bg-orange-500/10 border-orange-500/20' : 'text-foreground bg-muted border-border/50'
             )}
         >
             {String(value).padStart(2, '0')}
         </div>
-        <span className="text-xs text-muted-foreground mt-1">{label}</span>
+        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mt-1.5 block">{label}</span>
     </div>
 );

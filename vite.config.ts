@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
     port: 5000,
     allowedHosts: true,
     proxy: {
+      "/api/admin": {
+        target: "http://localhost:3002",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:3001",
         changeOrigin: true,
