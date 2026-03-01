@@ -70,7 +70,7 @@ export function Navbar({ onSignIn }: { onSignIn: () => void }) {
             <div className="lp-nav__inner">
                 <div className="lp-nav__brand">
                     <div className="lp-nav__logo"><Swords size={20} color="white" /></div>
-                    <span className="lp-nav__name">MMA CHAMPIONS LEAGUE</span>
+                    <span className="lp-nav__name">GRIT</span>
                 </div>
                 <div className="lp-nav__links">
                     <span className="lp-nav__link lp-nav__link--desktop" onClick={() => go('features')}>{t('nav.features')}</span>

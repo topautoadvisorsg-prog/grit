@@ -44,9 +44,9 @@
     "hero": {
         "badge": "Competición Global en Vivo",
         "title_main": "Analiza. Compite. Domina.",
-        "title_accent": "La Liga de Campeones de MMA con IA",
+        "title_accent": "Plataforma de Predicciones y Análisis de MMA",
         "subtitle": "Múltiples Sistemas de IA. Una Arena Global. Tu IQ de Combate.",
-        "desc": "Una liga competitiva donde múltiples sistemas de IA analizan peleas, tú tomas las decisiones y los rankings globales demuestran quién realmente entiende el MMA.",
+        "desc": "GRIT es una plataforma de la Liga de Fantasía Global de MMA donde los usuarios analizan predicciones de peleas, estudian el historial de rendimiento de los luchadores y siguen los rankings competitivos.",
         "cta": "Únete a la Liga"
     },
     "ai_arena": {
@@ -64,7 +64,7 @@
     },
     "intro": {
         "label": "¿Qué Es Esto?",
-        "title": "MMA Champions League Es una Liga de Inteligencia Competitiva",
+        "title": "GRIT es una Liga de Inteligencia Competitiva",
         "desc": "No es una casa de apuestas. No es una app básica de pronósticos. Es una plataforma competitiva donde múltiples sistemas de IA analizan las mismas peleas — y tú decides quién tiene razón. Estudia los datos, haz tus picks y compite contra el mundo.",
         "pill_ai": "Arena IA",
         "pill_rankings": "Rankings Globales",
@@ -164,15 +164,15 @@
         "pro_desc": "Potencia total. Chat IA, insignias exclusivas y beneficios VIP.",
         "pro_feat1": "Todo lo del plan Plus",
         "pro_feat2": "Chat MMA con IA (ilimitado)",
-        "pro_feat3": "Insignia de MMA Champions League",
+        "pro_feat3": "Insignia de GRIT",
         "pro_feat4": "Ventajas en sorteos",
         "pro_feat5": "Acceso anticipado a funciones",
         "pro_cta": "Ser Pro"
     },
     "footer_cta": {
         "title1": "¿Listo para Entrar en ",
-        "title2": "La Matrix?",
+        "title2": "GRIT?",
         "subtitle": "Únete a la liga. Haz picks más inteligentes, escala en los rankings y demuestra tu IQ de combate en el escenario global.",
-        "cta": "Entrar en La Matrix"
+        "cta": "Entrar en GRIT"
     }
 }

@@ -254,11 +254,11 @@ const FightDetail: React.FC = () => {
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link
-            to="/"
+            to="/event"
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm font-medium">Back to Event</span>
+            <span className="text-sm font-medium">Back to Event List</span>
           </Link>
 
           <div className="text-center">
@@ -369,30 +369,37 @@ const FightDetail: React.FC = () => {
           />
         </section>
 
-        {/* Stats Comparison */}
-        <StatsComparison fighter1={fighter1} fighter2={fighter2} />
+        {/* War Room Analytics - 6 charts (3 per fighter) - ANALYSIS BEFORE PICK */}
+        <section className="glass-morphism p-6 md:p-10 border border-white/5">
+          <WarRoomAnalytics fighter1={fighter1} fighter2={fighter2} />
+        </section>
 
-        {/* Betting Odds */}
-        <BettingOddsSection fighter1={fighter1} fighter2={fighter2} />
+        {/* Fantasy Pick Section - THE DECISION */}
+        <section id="pick-section">
+          <FantasyPickSection
+            fighter1={fighter1}
+            fighter2={fighter2}
+            selectedFighter={selectedFighter}
+            selectedMethod={selectedMethod}
+            selectedRound={selectedRound}
+            onSelectMethod={handleSelectMethod}
+            onSelectRound={setSelectedRound}
+            isLocked={isPickLocked}
+            onLock={handleLockPick}
+            totalRounds={fight.rounds}
+            units={selectedUnits}
+            onSelectUnits={setSelectedUnits}
+          />
+        </section>
 
-        {/* Fantasy Pick Section */}
-        <FantasyPickSection
-          fighter1={fighter1}
-          fighter2={fighter2}
-          selectedFighter={selectedFighter}
-          selectedMethod={selectedMethod}
-          selectedRound={selectedRound}
-          onSelectMethod={handleSelectMethod}
-          onSelectRound={setSelectedRound}
-          isLocked={isPickLocked}
-          onLock={handleLockPick}
-          totalRounds={fight.rounds}
-          units={selectedUnits}
-          onSelectUnits={setSelectedUnits}
-        />
+        {/* Secondary Details */}
+        <section className="grid md:grid-cols-2 gap-6 opacity-80 hover:opacity-100 transition-opacity">
+          {/* Stats Comparison */}
+          <StatsComparison fighter1={fighter1} fighter2={fighter2} />
 
-        {/* War Room Analytics - 6 charts (3 per fighter) */}
-        <WarRoomAnalytics fighter1={fighter1} fighter2={fighter2} />
+          {/* Betting Odds */}
+          <BettingOddsSection fighter1={fighter1} fighter2={fighter2} />
+        </section>
 
         {/* Post-Fight Notes (structure ready, conditional display) */}
         <PostFightNotes

@@ -26,61 +26,48 @@ import {
 
 export interface NavItem {
     id: string;
-    labelKey: string; // Translation key
+    labelKey: string;
     icon: any;
+    path: string;
 }
 
-// User-facing tabs (visible to all)
+// User-facing tabs (Simplified for stabilization)
 export const userNavItems: NavItem[] = [
-    { id: 'dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
-    { id: 'eventcard', labelKey: 'sidebar.eventcard', icon: Calendar },
-    { id: 'rankings', labelKey: 'sidebar.rankings', icon: Trophy },
-    { id: 'fighters', labelKey: 'sidebar.fighters', icon: User },
-    { id: 'eventhistory', labelKey: 'sidebar.eventhistory', icon: History },
-    { id: 'news', labelKey: 'sidebar.news', icon: Newspaper },
-    { id: 'chat', labelKey: 'sidebar.chat', icon: MessageSquare },
-    { id: 'info', labelKey: 'sidebar.info', icon: Info },
-    { id: 'export', labelKey: 'sidebar.export', icon: Download },
-    { id: 'ai-predictions', labelKey: 'sidebar.ai_predictions', icon: Brain },
-    { id: 'ai-chat', labelKey: 'sidebar.ai_chat', icon: Bot },
-    { id: 'raffle', labelKey: 'sidebar.raffle', icon: Gift },
-    { id: 'influencers', labelKey: 'sidebar.influencers', icon: BadgeCheck },
+    { id: 'dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'event', labelKey: 'sidebar.eventcard', icon: Calendar, path: '/event' },
+    { id: 'fighters', labelKey: 'sidebar.fighters', icon: User, path: '/fighter/index' }, // Placeholder for fighter index
+    { id: 'competition', labelKey: 'sidebar.rankings', icon: Trophy, path: '/competition' },
+    { id: 'ai', labelKey: 'sidebar.ai_predictions', icon: Brain, path: '/ai' },
+    { id: 'chat', labelKey: 'sidebar.chat', icon: MessageSquare, path: '/chat' },
 ];
 
 // Admin-only tabs
 export const adminNavItems: NavItem[] = [
-    { id: 'create-event', labelKey: 'sidebar.create_event', icon: PlusSquare },
-    { id: 'event-editor', labelKey: 'sidebar.event_editor', icon: Pencil },
-    { id: 'import', labelKey: 'sidebar.import', icon: Upload },
-    { id: 'fighter-manager', labelKey: 'sidebar.fighter_manager', icon: User },
-    { id: 'create-news', labelKey: 'sidebar.create_news', icon: FileEdit },
-    { id: 'admin-tags', labelKey: 'sidebar.tag_manager', icon: Tags },
-    { id: 'admin-badges', labelKey: 'sidebar.badge_manager', icon: Award },
-    { id: 'admin-raffle', labelKey: 'sidebar.raffle_manager', icon: Ticket },
-    { id: 'admin-verification', labelKey: 'sidebar.user_verification', icon: BadgeCheck },
-    { id: 'admin-odds', labelKey: 'sidebar.odds_editor', icon: TrendingUp },
-    { id: 'admin-users', labelKey: 'sidebar.user_manager', icon: User },
-    { id: 'admin-audit', labelKey: 'sidebar.audit_log', icon: History },
-    { id: 'admin-settings', labelKey: 'sidebar.system_settings', icon: Settings },
+    { id: 'create-event', labelKey: 'sidebar.create_event', icon: PlusSquare, path: '/admin/create-event' },
+    { id: 'event-editor', labelKey: 'sidebar.event_editor', icon: Pencil, path: '/admin/event-editor' },
+    { id: 'import', labelKey: 'sidebar.import', icon: Upload, path: '/admin/import' },
+    { id: 'fighter-manager', labelKey: 'sidebar.fighter_manager', icon: User, path: '/admin/fighter-manager' },
+    { id: 'create-news', labelKey: 'sidebar.create_news', icon: FileEdit, path: '/admin/create-news' },
+    { id: 'admin-tags', labelKey: 'sidebar.tag_manager', icon: Tags, path: '/admin/tags' },
+    { id: 'admin-badges', labelKey: 'sidebar.badge_manager', icon: Award, path: '/admin/badges' },
+    { id: 'admin-raffle', labelKey: 'sidebar.raffle_manager', icon: Ticket, path: '/admin/raffle' },
+    { id: 'admin-verification', labelKey: 'sidebar.user_verification', icon: BadgeCheck, path: '/admin/verification' },
+    { id: 'admin-odds', labelKey: 'sidebar.odds_editor', icon: TrendingUp, path: '/admin/odds' },
+    { id: 'admin-users', labelKey: 'sidebar.user_manager', icon: User, path: '/admin/users' },
+    { id: 'admin-audit', labelKey: 'sidebar.audit_log', icon: History, path: '/admin/audit' },
+    { id: 'admin-settings', labelKey: 'sidebar.system_settings', icon: Settings, path: '/admin/settings' },
 ];
 
 // Tab Titles Helper
 export const tabTitles: Record<string, { title: string; subtitle: string }> = {
     // User tabs
     dashboard: { title: 'Dashboard', subtitle: 'Your fantasy MMA journey' },
-    advanced: { title: 'Advanced', subtitle: 'Analytics, signals, and comparisons' },
-    fighters: { title: 'Fighter Profiles', subtitle: 'Comprehensive fighter database' },
-    eventcard: { title: 'Event Card', subtitle: 'Full fight card view' },
-    eventhistory: { title: 'Event History', subtitle: 'Review your picks and performance' },
-    rankings: { title: 'MMA Metrics Rankings', subtitle: 'Event fantasy leaderboards' },
-    news: { title: 'News & Research', subtitle: 'Latest MMA analysis and updates' },
-    info: { title: 'App Guide', subtitle: 'Mechanics, Badges, and Help' },
-    export: { title: 'Export', subtitle: 'Export fighter and event data' },
-    'ai-predictions': { title: 'AI Predictions', subtitle: 'Premium AI-powered fight analysis' },
-    'ai-chat': { title: 'AI Chat', subtitle: 'Chat with MMA analysis AI (Premium)' },
+    event: { title: 'Event Card', subtitle: 'Full fight card view' },
+    fighter: { title: 'Fighter Profiles', subtitle: 'Comprehensive fighter database' },
+    competition: { title: 'MMA Metrics Rankings', subtitle: 'Event fantasy leaderboards' },
+    ai: { title: 'AI Predictions', subtitle: 'Premium AI-powered fight analysis' },
     chat: { title: 'Chat', subtitle: 'Global, event, and country chat rooms' },
-    raffle: { title: 'Raffle', subtitle: 'MMA Champions League giveaways' },
-    influencers: { title: 'Influencers', subtitle: 'Verified community voices' },
+    settings: { title: 'Settings', subtitle: 'Manage your profile and preferences' },
     // Admin tabs
     'create-event': { title: 'Create Event', subtitle: 'Admin - Create new events' },
     'event-editor': { title: 'Event Editor', subtitle: 'Admin - Edit events, status, and fights' },

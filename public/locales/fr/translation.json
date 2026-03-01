@@ -44,9 +44,9 @@
     "hero": {
         "badge": "Compétition Mondiale en Direct",
         "title_main": "Analysez. Rivalisez. Dominez.",
-        "title_accent": "La Ligue des Champions MMA Propulsée par l'IA",
+        "title_accent": "Plateforme de Prédictions et d'Analyses MMA",
         "subtitle": "Plusieurs Systèmes d'IA. Une Arène Mondiale. Votre QI de Combat.",
-        "desc": "Une ligue compétitive où plusieurs systèmes d'IA analysent les combats, vous prenez les décisions et les classements mondiaux prouvent qui comprend vraiment le MMA.",
+        "desc": "GRIT est une plateforme de la Global MMA Fantasy League où les utilisateurs analysent les prédictions de combats, étudient les statistiques des combattants et suivent les classements.",
         "cta": "Rejoindre la Ligue"
     },
     "ai_arena": {
@@ -64,7 +64,7 @@
     },
     "intro": {
         "label": "Qu'est-ce Que C'est ?",
-        "title": "MMA Champions League Est une Ligue d'Intelligence Compétitive",
+        "title": "GRIT est une Ligue d'Intelligence Compétitive",
         "desc": "Pas un bookmaker. Pas une simple appli de pronostics. C'est une plateforme compétitive où plusieurs systèmes d'IA analysent les mêmes combats — et vous décidez qui a raison. Étudiez les données, faites vos picks et affrontez le monde entier.",
         "pill_ai": "Arène IA",
         "pill_rankings": "Classements Mondiaux",
@@ -164,15 +164,15 @@
         "pro_desc": "Puissance maximale. Chat IA, badges exclusifs et avantages VIP.",
         "pro_feat1": "Tout ce qui est dans Plus",
         "pro_feat2": "Chat MMA IA (illimité)",
-        "pro_feat3": "Badge MMA Champions League",
+        "pro_feat3": "Badge GRIT",
         "pro_feat4": "Avantages tombola",
         "pro_feat5": "Accès anticipé aux nouvelles fonctionnalités",
         "pro_cta": "Passer Pro"
     },
     "footer_cta": {
         "title1": "Prêt à Entrer dans ",
-        "title2": "La Matrix ?",
+        "title2": "GRIT ?",
         "subtitle": "Rejoignez la ligue. Faites des picks plus intelligents, grimpez dans les classements et prouvez votre QI de combat sur la scène mondiale.",
-        "cta": "Entrer dans La Matrix"
+        "cta": "Entrer dans GRIT"
     }
 }

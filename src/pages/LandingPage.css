@@ -1,5 +1,5 @@
 /* =================================================================
-   LANDING PAGE V3 — MMA MATRIX — NEXT-GEN COMPETITIVE EXPERIENCE
+   LANDING PAGE V3 — GRIT — NEXT-GEN COMPETITIVE EXPERIENCE
    ================================================================= */
 
 /* --- KEYFRAMES ---------------------------------------------------------------- */
@@ -428,7 +428,7 @@
   align-items: center;
   gap: 6px;
   background: none;
-  border: 1px solid rgba(255,255,255,.15);
+  border: 1px solid rgba(255, 255, 255, .15);
   border-radius: 8px;
   padding: 6px 10px;
   color: var(--text-secondary);
@@ -452,20 +452,27 @@
   top: calc(100% + 8px);
   right: 0;
   background: hsl(220 25% 12%);
-  border: 1px solid rgba(255,255,255,.1);
+  border: 1px solid rgba(255, 255, 255, .1);
   border-radius: 10px;
   padding: 6px;
   list-style: none;
   margin: 0;
   min-width: 160px;
   z-index: 100;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
   animation: lp-lang-in .15s ease-out;
 }
 
 @keyframes lp-lang-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .lp-lang__option {
@@ -485,13 +492,13 @@
 }
 
 .lp-lang__option:hover {
-  background: rgba(255,255,255,.06);
+  background: rgba(255, 255, 255, .06);
   color: #fff;
 }
 
 .lp-lang__option--active {
   color: var(--cyan);
-  background: rgba(0,200,255,.08);
+  background: rgba(0, 200, 255, .08);
 }
 
 .lp-lang__flag {
@@ -525,12 +532,10 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    180deg,
-    hsla(220, 25%, 6%, 0.4) 0%,
-    hsla(220, 25%, 6%, 0.55) 40%,
-    hsla(220, 25%, 6%, 0.75) 100%
-  );
+  background: linear-gradient(180deg,
+      hsla(220, 25%, 6%, 0.4) 0%,
+      hsla(220, 25%, 6%, 0.55) 40%,
+      hsla(220, 25%, 6%, 0.75) 100%);
   pointer-events: none;
 }
 

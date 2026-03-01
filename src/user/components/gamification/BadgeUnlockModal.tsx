@@ -36,7 +36,7 @@ export const BadgeUnlockModal: React.FC<BadgeUnlockModalProps> = ({
         if (navigator.share) {
             navigator.share({
                 title: `I earned the ${config.label} badge!`,
-                text: `${config.description} - MMA Matrix Pro`,
+                text: `${config.description} - GRIT`,
             });
         }
     };

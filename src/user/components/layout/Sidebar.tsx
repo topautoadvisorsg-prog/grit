@@ -1,52 +1,30 @@
 import React from 'react';
 import { cn } from '@/shared/lib/utils';
-import { Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/use-auth';
 import { useTranslation } from 'react-i18next';
 import {
   User,
-  Trophy,
-  Calendar,
-  Newspaper,
-  BarChart3,
   Settings,
   Search,
   Swords,
-  PlusSquare,
-  Upload,
-  Download,
-  FileEdit,
-  History,
   Shield,
   LayoutDashboard,
-  Brain,
   MessageSquare,
-  Bot,
-  Gift,
-  BadgeCheck,
-  Tags,
-  Award,
-  Ticket,
-  TrendingUp,
-  Pencil,
 } from 'lucide-react';
 import { userNavItems, adminNavItems } from '@/shared/config/navigation';
 
 interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
   isCollapsed?: boolean;
   isAdmin?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  onTabChange,
   isCollapsed = false,
   isAdmin = false,
 }) => {
   const { t } = useTranslation();
-
+  const location = useLocation();
 
   return (
     <aside
@@ -57,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b border-sidebar-border px-4">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="relative">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <Swords className="h-5 w-5 text-white" />
@@ -67,27 +45,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && (
             <div className="flex flex-col">
               <span className="font-display text-lg tracking-wide text-gradient-brand">
-                MMA MATRIX
-              </span>
-              <span className="text-[10px] font-bold tracking-widest text-accent uppercase">
-                PRO
+                GRIT
               </span>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="p-4 border-b border-sidebar-border">
-        <button
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-accent/50 text-muted-foreground hover:bg-sidebar-accent transition-colors',
-            isCollapsed && 'justify-center'
-          )}
-        >
-          <Search className="h-4 w-4" />
-          {!isCollapsed && <span className="text-sm">{t('sidebar.search')}</span>}
-        </button>
+        </Link>
       </div>
 
       {/* Main Navigation - User Tabs */}
@@ -95,12 +57,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="space-y-1">
           {userNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = location.pathname.startsWith(item.path);
 
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
+                to={item.path}
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                   isActive
@@ -114,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {isActive && !isCollapsed && (
                   <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
                 )}
-              </button>
+              </NavLink>
             );
           })}
         </div>
@@ -133,12 +95,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-1">
               {adminNavItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = location.pathname.startsWith(item.path);
 
                 return (
-                  <button
+                  <NavLink
                     key={item.id}
-                    onClick={() => onTabChange(item.id)}
+                    to={item.path}
                     className={cn(
                       'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                       isActive
@@ -152,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {isActive && !isCollapsed && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
                     )}
-                  </button>
+                  </NavLink>
                 );
               })}
             </div>

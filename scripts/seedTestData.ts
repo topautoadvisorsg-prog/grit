@@ -130,7 +130,7 @@ async function seed() {
     console.log("📅 Inserting 1 event...");
     await db.insert(schema.events).values({
         id: IDS.event1,
-        name: "MMA Champions League Test Event 1",
+        name: "GRIT Test Event 1",
         date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
         venue: "T-Mobile Arena",
         city: "Las Vegas",
@@ -289,7 +289,7 @@ async function seed() {
         id: IDS.article1,
         title: "Volkov vs Santos: The Heavyweight Showdown Preview",
         subtitle: "Two of the division's hardest hitters clash at Test Event 1",
-        excerpt: "Alex Volkov and Marcus Santos are set to headline the MMA Champions League Test Event in a five-round heavyweight bout.",
+        excerpt: "Alex Volkov and Marcus Santos are set to headline the GRIT Test Event in a five-round heavyweight bout.",
         content: `
 ## The Matchup
 

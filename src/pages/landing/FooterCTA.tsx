@@ -23,9 +23,9 @@ export function FooterCTA({ onSignIn }: { onSignIn: () => void }) {
                 <div className="lp-footer__inner">
                     <div className="lp-footer__brand">
                         <div className="lp-footer__logo"><Swords size={14} color="white" /></div>
-                        <span className="lp-footer__name">MMA CHAMPIONS LEAGUE</span>
+                        <span className="lp-footer__name">GRIT</span>
                     </div>
-                    <span className="lp-footer__copy">© {new Date().getFullYear()} MMA Champions League. All rights reserved.</span>
+                    <span className="lp-footer__copy">© {new Date().getFullYear()} GRIT. All rights reserved.</span>
                 </div>
             </footer>
         </>

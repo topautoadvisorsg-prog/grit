@@ -104,9 +104,9 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
         <div className="welcome-overlay">
             <div className="welcome-modal">
                 <div className="welcome-modal__icon"><Swords size={28} /></div>
-                <h2 className="welcome-modal__title">Welcome to the League</h2>
+                <h2 className="welcome-modal__title">Welcome to GRIT</h2>
                 <p className="welcome-modal__subtitle">
-                    Set up your profile to start competing. Your country unlocks
+                    The Global MMA Fantasy League. Set up your profile to start competing. Your country unlocks
                     regional leaderboards and chat rooms.
                 </p>
 
@@ -175,7 +175,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
                         {submitting ? (
                             <><Loader2 size={18} className="animate-spin" /> Setting up...</>
                         ) : (
-                            <>Enter The Matrix <ChevronRight size={18} /></>
+                            <>JOIN GRIT <ChevronRight size={18} /></>
                         )}
                     </button>
                 </form>

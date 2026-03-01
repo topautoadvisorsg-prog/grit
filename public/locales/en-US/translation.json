@@ -2,7 +2,7 @@
     "sidebar": {
         "dashboard": "Dashboard",
         "eventcard": "Event Card",
-        "rankings": "MMA Metrics Rankings",
+        "rankings": "GRIT Rankings",
         "fighters": "Fighter Profiles",
         "eventhistory": "Event History",
         "news": "News",
@@ -44,7 +44,7 @@
     "hero": {
         "badge": "Global Competition Live",
         "title_main": "Analyze. Compete. Dominate.",
-        "title_accent": "The AI-Powered MMA Champions League",
+        "title_accent": "The AI-Powered GRIT",
         "subtitle": "Multiple AI Systems. One Global Arena. Your Fight IQ.",
         "desc": "A competitive league where multiple AI systems analyze fights, you make the calls, and global rankings prove who really understands MMA.",
         "cta": "Join the League"
@@ -64,7 +64,7 @@
     },
     "intro": {
         "label": "What Is This?",
-        "title": "MMA Champions League Is a Competitive Intelligence League",
+        "title": "GRIT Is a Competitive Intelligence League",
         "desc": "Not a sportsbook. Not a basic picks app. This is a competitive platform where multiple AI systems analyze the same fights — and you decide who's right. Study the data, make your picks, and compete against the world.",
         "pill_ai": "AI Arena",
         "pill_rankings": "Global Rankings",
@@ -164,15 +164,15 @@
         "pro_desc": "Full power. AI chat, exclusive badges, and VIP perks.",
         "pro_feat1": "Everything in Plus",
         "pro_feat2": "AI MMA Chat (unlimited)",
-        "pro_feat3": "MMA Champions League badge",
+        "pro_feat3": "GRIT badge",
         "pro_feat4": "Raffle entry perks",
         "pro_feat5": "Early feature access",
         "pro_cta": "Go Pro"
     },
     "footer_cta": {
         "title1": "Ready to Enter ",
-        "title2": "The Matrix?",
+        "title2": "GRIT?",
         "subtitle": "Join the league. Make smarter picks, climb rankings, and prove your fight IQ on the global stage.",
-        "cta": "Enter The Matrix"
+        "cta": "Enter GRIT"
     }
 }

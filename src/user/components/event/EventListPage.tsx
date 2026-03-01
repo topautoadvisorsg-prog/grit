@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
@@ -7,6 +8,9 @@ import { Calendar, MapPin, Trophy, Users, ArrowLeft, Loader2 } from 'lucide-reac
 import { EventCardPage } from './EventCardPage';
 import { Event, EventFight } from '@/shared/types/fighter';
 import { cn } from '@/shared/lib/utils';
+import SEO from '@/shared/components/SEO';
+import { generateEventSchema, injectJSONLD } from '@/shared/utils/SEOHelper';
+import { useEffect } from 'react';
 
 interface DbEvent {
   id: string;
@@ -77,8 +81,7 @@ const transformDbEventToFrontend = (dbEvent: DbEventWithFights): Event => {
 };
 
 export const EventListPage = () => {
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   const { data: events = [], isLoading: eventsLoading } = useQuery<DbEvent[]>({
     queryKey: ['/api/events'],
     queryFn: async () => {
@@ -88,14 +91,13 @@ export const EventListPage = () => {
     },
   });
 
-  const { data: selectedEventData, isLoading: eventDetailLoading } = useQuery<DbEventWithFights>({
-    queryKey: ['/api/events', selectedEventId],
+  const { data: userPicks = [] } = useQuery<any[]>({
+    queryKey: ['/api/picks'],
     queryFn: async () => {
-      const response = await fetch(`/api/events/${selectedEventId}`);
-      if (!response.ok) throw new Error('Failed to fetch event details');
+      const response = await fetch('/api/picks');
+      if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!selectedEventId,
   });
 
   const formatDate = (dateStr: string) => {
@@ -123,34 +125,9 @@ export const EventListPage = () => {
     }
   };
 
-  if (selectedEventId) {
-    if (eventDetailLoading) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-          <span className="ml-2 text-muted-foreground">Loading event...</span>
-        </div>
-      );
-    }
-
-    if (selectedEventData) {
-      const frontendEvent = transformDbEventToFrontend(selectedEventData);
-      return (
-        <div className="space-y-4">
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedEventId(null)}
-            className="mb-2"
-            data-testid="button-back-to-events"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Events
-          </Button>
-          <EventCardPage event={frontendEvent} />
-        </div>
-      );
-    }
-  }
+  const isPicked = (eventId: string) => {
+    return userPicks.some(pick => pick.eventId === eventId);
+  };
 
   if (eventsLoading) {
     return (
@@ -161,75 +138,135 @@ export const EventListPage = () => {
     );
   }
 
-  if (events.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
-          <Calendar className="w-8 h-8 text-muted-foreground/50" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No Events Created Yet</h3>
-        <p className="text-sm text-muted-foreground max-w-md">
-          Create an event in the Admin section to see it here.
-        </p>
-      </div>
-    );
-  }
+  const latestEvent = events[0];
+
+  useEffect(() => {
+    if (latestEvent) {
+      const schema = generateEventSchema({
+        name: latestEvent.name,
+        description: latestEvent.description,
+        startDate: latestEvent.date,
+        location: latestEvent.city,
+        venue: latestEvent.venue,
+        fightCard: []
+      });
+      injectJSONLD(schema);
+    }
+  }, [latestEvent]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-foreground">Events ({events.length})</h2>
-      </div>
-
-      <div className="grid gap-4">
-        {events.map(event => (
-          <Card
-            key={event.id}
-            className="cursor-pointer hover-elevate transition-all"
-            onClick={() => setSelectedEventId(event.id)}
-            data-testid={`card-event-${event.id}`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className={cn(getStatusColor(event.status), "font-black tracking-widest uppercase tabular-nums")}>
-                      {event.status === 'Upcoming' ? 'OPEN' : event.status === 'Completed' ? 'CLOSED' : 'LIVE'}
-                    </Badge>
-                    <Badge variant="outline">{event.organization}</Badge>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-foreground truncate" data-testid={`text-event-name-${event.id}`}>
-                    {event.name}
-                  </h3>
-
-                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>{formatDate(event.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{event.venue}, {event.city}{event.state ? `, ${event.state}` : ''}</span>
-                    </div>
-                  </div>
-
-                  {event.description && (
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
+    <div className="space-y-8">
+      <SEO
+        title="Upcoming MMA Events"
+        description={`Join GRIT to analyze and predict upcoming MMA events like ${latestEvent?.name || 'the next big fight'}.`}
+        keywords="MMA fight cards, upcoming UFC events, MMA predictions, fight analysis"
+      />
+      <SEO
+        title="Upcoming MMA Events"
+        description={`Join GRIT to analyze and predict upcoming MMA events like ${latestEvent?.name || 'the next big fight'}.`}
+        keywords="MMA fight cards, upcoming UFC events, MMA predictions, fight analysis"
+      />
+      {/* Hero Section */}
+      {latestEvent && (
+        <section
+          className="relative rounded-2xl overflow-hidden glass-morphism border border-white/10 hover-gradient-border group cursor-pointer"
+          onClick={() => navigate(`/event/fight/${latestEvent.id}`)} // This will be updated to handle event detail vs fight detail properly
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent z-10" />
+          <div className="relative h-[300px] md:h-[400px] flex items-end p-6 md:p-10 z-20">
+            <div className="space-y-4 max-w-2xl">
+              <Badge className={cn(getStatusColor(latestEvent.status), "text-xs font-bold uppercase tracking-[0.2em]")}>
+                {latestEvent.status === 'Upcoming' ? 'NEXT EVENT' : latestEvent.status}
+              </Badge>
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight italic uppercase">
+                {latestEvent.name}
+              </h1>
+              <div className="flex flex-wrap gap-4 text-sm md:text-base text-zinc-300 font-medium">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-cyan-400" />
+                  <span>{formatDate(latestEvent.date)}</span>
                 </div>
-
-                <div className="flex-shrink-0">
-                  <Button variant="outline" size="sm" data-testid={`button-view-event-${event.id}`}>
-                    View Card
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-cyan-400" />
+                  <span>{latestEvent.venue}, {latestEvent.city}</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {latestEvent.description && (
+                <p className="text-zinc-400 line-clamp-2 text-sm md:text-base leading-relaxed">
+                  {latestEvent.description}
+                </p>
+              )}
+              <Button size="lg" className="bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase tracking-wider rounded-none">
+                <Trophy className="mr-2 h-5 w-5" />
+                JOIN GRIT
+              </Button>
+            </div>
+          </div>
+          <div
+            className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058917232-d750c1859d7c?q=80&w=2070')] bg-cover bg-center group-hover:scale-105 transition-transform duration-700 opacity-40"
+          />
+        </section>
+      )}
+
+      {/* Event List */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-black text-white italic uppercase tracking-widest flex items-center gap-2">
+          <Calendar className="h-6 w-6 text-cyan-400" />
+          Fight Cards
+        </h2>
+
+        <div className="grid gap-4">
+          {events.map(event => (
+            <Card
+              key={event.id}
+              className="group cursor-pointer glass-morphism border-white/5 hover:border-cyan-500/50 transition-all overflow-hidden"
+              onClick={() => navigate(`/event`)} // Update once event detail route is clearer, or use modal
+            >
+              <CardContent className="p-0">
+                <div className="flex flex-col md:flex-row md:items-center">
+                  <div className="p-6 flex-1 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={cn(getStatusColor(event.status), "font-black tracking-widest uppercase text-[10px]")}>
+                        {event.status}
+                      </Badge>
+                      {isPicked(event.id) ? (
+                        <Badge className="bg-green-500/10 text-green-400 border-green-500/20 font-bold text-[10px] uppercase italic">
+                          <Trophy className="w-3 h-3 mr-1 inline" />
+                          Picked
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-zinc-800 text-zinc-500 font-bold text-[10px] uppercase">
+                          No Picks
+                        </Badge>
+                      )}
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
+                      {event.name}
+                    </h3>
+
+                    <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-zinc-600" />
+                        {formatDate(event.date)}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-zinc-600" />
+                        {event.venue}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="px-6 pb-6 md:pb-0 md:pr-10">
+                    <Button variant="ghost" className="text-cyan-400 group-hover:bg-cyan-400 group-hover:text-black transition-all">
+                      VIEW CARD
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

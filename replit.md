@@ -1,8 +1,8 @@
-# MMA Matrix Pro
+# GRIT
 
 ## Overview
 
-MMA Matrix Pro is a professional MMA fighter intelligence and analytics platform for analytics, scouting, and fantasy-style competition. It centralizes fighter data, fight history, events, rankings, and user picks into a unified system, with the **Fighter Profile as the Source of Truth**. The project aims to provide a trustworthy, powerful analytics platform with future ambitions for multi-organization support, real-time updates, and robust scalability, ensuring no module defines fighter data independently.
+GRIT is a professional Global MMA Fantasy League platform for analytics, scouting, and competition. It centralizes fighter data, fight history, events, rankings, and user picks into a unified system, with the **Fighter Profile as the Source of Truth**.
 
 ## User Preferences
 

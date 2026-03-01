@@ -36,7 +36,7 @@ export function registerRaffleRoutes(app: Express) {
 
             res.json({
                 totalTickets: totalResult?.total || 0,
-                poolDescription: "MMA Champions League Raffle",
+                poolDescription: "GRIT Raffle",
                 lastWinner,
             });
         } catch (error) {

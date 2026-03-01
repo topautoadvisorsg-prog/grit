@@ -1,6 +1,6 @@
-# MMA Matrix Pro
+# GRIT
 
-A comprehensive MMA fighter database, fantasy picks platform, and analytics system.
+A comprehensive Global MMA Fantasy League, fighter database, and analytics system.
 
 ## Technology Stack
 
@@ -17,44 +17,45 @@ A comprehensive MMA fighter database, fantasy picks platform, and analytics syst
 
 ## Frontend Architecture
 
-### Tab-Based SPA
+### URL-Based Routing
 
-The app uses a **single-page, tab-driven layout** — NOT traditional URL-based routing.
+The application has migrated from a tab-based SPA to a stable **URL-driven routing architecture** using `react-router-dom`. This supports native browser back/forward navigation, deep linking, and URL state reflection.
 
-The main shell is `src/pages/Index.tsx` which renders a `Sidebar` and a `renderTabContent()` switch. Each sidebar item sets an `activeTab` state string, and the switch statement renders the corresponding component.
+The main shell is defined in `App.tsx` and uses `Index.tsx` as the `MainLayout` component with React Router's `<Outlet />`.
 
-**Only 4 React Router URLs exist:**
+#### Primary User Routes:
 
-| URL | Component | Purpose |
-|-----|-----------|---------|
-| `/` | `Index.tsx` | Main shell — renders all tabs via sidebar |
-| `/fight/:fightId` | `FightDetail.tsx` | Deep-link to fight analysis |
-| `/settings` | `Settings.tsx` | Profile, stats, gamification, notifications |
-| `/admin/fight-cards` | `AdminFightCards.tsx` | Standalone admin fight management |
+| Route | Component | Purpose |
+|-------|-----------|---------|
+| `/dashboard` | `Dashboard` | User progress, stats, and personalized summary |
+| `/event` | `EventListPage` | Core loop entry point; Hero section + full fight card |
+| `/event/fight/:id` | `FightDetail` | Centralized Analysis + Picking module |
+| `/fighter/index` | `FighterIndex` | Searchable fighter database |
+| `/fighter/:id` | `FighterProfilePage` | Dedicated fighter biography and performance stats |
+| `/competition` | `MMAMetricsRankings` | Global & regional rankings (Leaderboard) |
+| `/ai` | `AIPredictionsTab` | General-purpose AI research utility |
+| `/chat` | `ChatHub` | Real-time global and country-specific chat |
+| `/settings` | `Settings` | Consolidated profile, privacy, and account settings |
 
-### Sidebar → Tab → Component Mapping
+#### Admin & Utility Routes:
 
-**User Tabs (12):**
+| Route | Component | Purpose |
+|-------|-----------|---------|
+| `/admin/fight-cards` | `AdminFightCards` | Admin fight management and status controls |
+| `*` | `NotFound` | 404 handler |
 
-| Sidebar Label | Tab ID | Component |
-|--------------|--------|-----------|
-| Dashboard | `dashboard` | `Dashboard` |
-| Event Card | `eventcard` | `EventListPage` → `EventCardPage` |
-| MMA Metrics Rankings | `rankings` | `MMAMetricsRankings` (leaderboard) |
-| Fighter Profiles | `fighters` | `FighterIndex` → `FighterProfile` |
-| Event History | `eventhistory` | `EventHistoryPage` |
-| News | `news` | `NewsPage` |
-| Chat | `chat` | `ChatHub` |
-| App Guide | `info` | `InfoTab` |
-| Export | `export` | `ExportPage` |
-| AI Predictions | `ai-predictions` | `AIPredictionsTab` |
-| AI Chat | `ai-chat` | `AIChatTab` |
-| Raffle | `raffle` | `RaffleTab` |
-| Influencers | `influencers` | `InfluencerTab` |
+---
 
-**Admin Tabs (10):** Create Event, Event Editor, Import, Fighter Manager, Create News, Tag Manager, Badge Manager, Raffle Manager, User Verification, Odds Editor.
+## Core Competitive Loop
 
-> **Audit rule:** Before reporting any page as "missing", verify the sidebar tab ID mapping in `Index.tsx` and the component import. Content pages are rendered via tabs, not URL routes.
+The platform is designed around a single, reinforced competitive flow:
+
+**Event Discovery → Fight Card → Fight Detail (Analysis) → Contextual Pick → Feedback Loop**
+
+1. **Event Discovery**: Users land on the `/event` page, featuring a high-impact Hero section for the latest event.
+2. **Analysis**: Users navigate to the **Fight Detail** page, where `WarRoomAnalytics` provides data-driven insights (Contextual AI).
+3. **The Pick**: Picking functionality is centralized within the Fight Detail page, ensuring users make informed decisions as part of the analysis flow.
+4. **Feedback**: Once fights are finalized by Admin, users receive immediate point feedback and progress updates.
 
 ---
 
@@ -63,15 +64,21 @@ The main shell is `src/pages/Index.tsx` which renders a `Sidebar` and a `renderT
 ```
 Admin creates Event → Admin adds Fights → Admin sets status to Upcoming
      ↓
-Users browse Event Card tab → Users make picks (fighter + method + round + units)
+Users browse `/event` → Users browse/select Fight Detail `/event/fight/:id`
      ↓
-Admin sets event to Live → All picks LOCK
+Users perform Analysis (AI) → Users make Pick (In-page picking module)
      ↓
-Admin enters fight results (per-fight) → Points awarded per pick
+Admin sets event to Live → All picks LOCK (Time/Status/Flag enforcement)
+     ↓
+Admin enters fight results → Points awarded via atomic DB Transaction
+     ↓
+Clean Sweep detected (100% Accuracy) → **Prestige Key** Awarded
+     ↓
+User collects 5 Keys → **Ultra Badge** milestone reached
      ↓
 Admin sets event to Closed → Leaderboard snapshot saved
      ↓
-Users check their Stats (Settings → My Stats) and Rankings (sidebar)
+Users check `/settings` (My Stats) and `/competition` (Rankings)
 ```
 
 ---
@@ -102,22 +109,15 @@ Users check their Stats (Settings → My Stats) and Rankings (sidebar)
 
 ---
 
-## System Architecture
+### System Components
 
-### Data Flow
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Supabase      │     │   Express.js    │     │   React App     │
-│   PostgreSQL    │◄────│   API Server    │◄────│   Frontend      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-   Drizzle ORM           Middleware:              React Query
-   Schema Sync       - isAuthenticated           Data Fetching
-                     - requireAdmin              Tab-based SPA
-                     - requireTier
-```
+| Layer | Responsibility |
+|-------|----------------|
+| **Routing** | URL-based navigation via `react-router-dom` in `App.tsx`. |
+| **Auth** | Current testing system uses Replit OIDC/Passport; designed for future Supabase migration. |
+| **Integrity** | Multi-layer pick locking (Time, Event Status, and Manual Lock Flags). |
+| **Prestige** | Automated Clean Sweep detection awards unique **User Keys**. |
+| **Milestones** | Badge Audit system tracks cumulative achievements (e.g., Ultra Badge at 5 Keys). |
 
 ### Event Lifecycle
 
@@ -125,9 +125,21 @@ Users check their Stats (Settings → My Stats) and Rankings (sidebar)
 Upcoming → Live → Completed → Closed → Archived
     │         │                  │
     │         │                  └── Triggers snapshot
-    │         └── Locks all picks
-    └── Picks can be created/modified
+    │         └── Locks all picks (Status Lock)
+    └── Users make/edit picks (unless current time >= Event Time)
 ```
+
+### Integrity & Safety Logic
+
+1. **Transaction Atomicity**: The `finalizeFightResult` function runs in a strict database transaction. It ensures that fight results, user point updates, fight history entries, and prestige key awards are processed as a single atomic unit.
+2. **Unique Constraints**: 
+   - `user_keys` table enforces `UNIQUE(userId, eventId)` to prevent duplicate awards.
+   - `badge_audit` table enforces `UNIQUE(userId, badgeType)` for milestone integrity.
+3. **Pick Locking**: Verified across three layers:
+   - **Time-based**: `now >= eventStartTime` blocks all modifications.
+   - **Status-based**: Event status != 'Upcoming' blocks modifications.
+   - **Flag-based**: `isLocked` flag on pick becomes immutable after fight finalization.
+4. **Audit Logging**: All admin-driven fight results and milestone awards are logged in dedicated audit tables (`fight_history_audit`, `badge_audit`) to ensure a verifiable record of system actions.
 
 ### Scoring Source of Truth
 
@@ -504,3 +516,12 @@ To test webhooks locally:
    stripe listen --forward-to localhost:3001/api/webhooks/stripe
    ```
 4. Copy the signing secret provided by the CLI and add it to your environment as `STRIPE_WEBHOOK_SECRET`.
+
+---
+
+## 🚀 Testing Phase Notice
+
+> [!IMPORTANT]
+> **MMA Matrix Pro is currently in the Closed Beta Stabilization Phase.**
+> - The platform is undergoing controlled stress testing for routing integrity and scoring accuracy.
+> - Features, specifically AI and Competition modules, are subject to refinement based on testing feedback.

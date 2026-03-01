@@ -44,9 +44,9 @@
     "hero": {
         "badge": "Global Competition Live",
         "title_main": "Analyze. Compete. Dominate.",
-        "title_accent": "The AI-Powered MMA Champions League",
+        "title_accent": "MMA Prediction & Analytics Platform",
         "subtitle": "Multiple AI Systems. One Global Arena. Your Fight IQ.",
-        "desc": "A competitive league where multiple AI systems analyze fights, you make the calls, and global rankings prove who really understands MMA.",
+        "desc": "GRIT is a Global MMA Fantasy League platform where users analyze MMA flight predictions, study fighter performance history, and track competitive rankings across events.",
         "cta": "Join the League"
     },
     "ai_arena": {
@@ -64,8 +64,8 @@
     },
     "intro": {
         "label": "What Is This?",
-        "title": "MMA Champions League Is a Competitive Intelligence League",
-        "desc": "Not a sportsbook. Not a basic picks app. This is a competitive platform where multiple AI systems analyze the same fights — and you decide who's right. Study the data, make your picks, and compete against the world.",
+        "title": "Predict Results. Dominate Rankings.",
+        "desc": "Not a sportsbook. This is a competitive platform for MMA fight card analysis and fighter record tracking. Study KO/Submission/Decision statistics and compete against the world with your fight intelligence.",
         "pill_ai": "AI Arena",
         "pill_rankings": "Global Rankings",
         "pill_data": "Deep Fighter Data",
@@ -74,8 +74,8 @@
     },
     "showcase_ai": {
         "label": "Fight IQ Assistant",
-        "title": "Analyze with Grok",
-        "desc": "Need deeper insights? Ask Grok. Our specialized AI chat agent analyzes fighter records, styles, and historical data to give you the edge. It doesn't just predict — it explains.",
+        "title": "Analyze with AI",
+        "desc": "Need deeper insights? Ask the AI. Our specialized AI chat agent analyzes fighter records, styles, and historical data to give you the edge. It doesn't just predict — it explains.",
         "feat1": "Ask direct fight questions",
         "feat2": "Get data-backed analysis",
         "feat3": "Understand stylistic matchups",
@@ -93,7 +93,7 @@
     "showcase_rankings": {
         "label": "Rankings & Progression",
         "title": "Compete. Rise. Earn Your Legacy.",
-        "desc": "A full progression system that rewards consistency and accuracy. Earn stars every month, unlock badge tiers from Ninja to… something legendary, and climb the global rankings. Your performance defines your status.",
+        "desc": "A full progression system that rewards consistency and accuracy. Rise through the global rankings. Your performance defines your status.",
         "feat1": "Monthly star system (0-5★)",
         "feat2": "Badge tiers: Ninja → Samurai → Master → ❓",
         "feat3": "ROI-based ranking system",
@@ -112,7 +112,7 @@
         "title": "Four Steps to Domination",
         "subtitle": "From sign-up to the top of the leaderboard — here's the path.",
         "step1_title": "Create Your Profile",
-        "step1_desc": "Sign up with Google in seconds. Set your country, pick your display name, and enter the league.",
+        "step1_desc": "Sign up and set your country, pick your display name, and enter the league.",
         "step2_title": "Make Your Picks",
         "step2_desc": "Browse upcoming events, study the odds, and lock in your fight predictions before the bell rings.",
         "step3_title": "Track Performance",
@@ -164,15 +164,15 @@
         "pro_desc": "Full power. AI chat, exclusive badges, and VIP perks.",
         "pro_feat1": "Everything in Plus",
         "pro_feat2": "AI MMA Chat (unlimited)",
-        "pro_feat3": "MMA Champions League badge",
+        "pro_feat3": "GRIT Pro badge",
         "pro_feat4": "Raffle entry perks",
         "pro_feat5": "Early feature access",
         "pro_cta": "Go Pro"
     },
     "footer_cta": {
         "title1": "Ready to Enter ",
-        "title2": "The Matrix?",
+        "title2": "GRIT?",
         "subtitle": "Join the league. Make smarter picks, climb rankings, and prove your fight IQ on the global stage.",
-        "cta": "Enter The Matrix"
+        "cta": "Join GRIT"
     }
 }

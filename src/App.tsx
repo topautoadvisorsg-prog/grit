@@ -3,7 +3,7 @@ import { Toaster } from "@/shared/components/ui/toaster";
 import { Toaster as Sonner } from "@/shared/components/ui/sonner";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { FighterDataProvider } from "@/shared/context/FighterDataContext";
 import { FightHistoryProvider } from "@/shared/context/FightHistoryContext";
 import { GamificationProvider } from "@/shared/context/GamificationContext";
@@ -15,6 +15,13 @@ import FightDetail from "./pages/FightDetail";
 import Settings from "./pages/Settings";
 import AdminFightCards from "@/admin/pages/AdminFightCards";
 import NotFound from "./pages/NotFound";
+import FighterProfilePage from "./pages/FighterProfilePage";
+import { Dashboard } from "@/user/components/dashboard";
+import { EventListPage } from "@/user/components/event/EventListPage";
+import { MMAMetricsRankings } from "@/user/components/rankings/MMAMetricsRankings";
+import { AIPredictionsTab } from "@/user/components/ai";
+import { ChatHub } from "@/user/components/chat/ChatHub";
+import { FighterIndex } from "@/user/components/fighter/FighterIndex";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +41,7 @@ const queryClient = new QueryClient({
 });
 
 function AppRoutes() {
+  const navigate = useNavigate();
   const { user, isLoading } = useAuth();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
@@ -71,9 +79,19 @@ function AppRoutes() {
         <WelcomeModal onComplete={() => setOnboardingDismissed(true)} />
       )}
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/fight/:fightId" element={<FightDetail />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/" element={<Index />}>
+          <Route index element={<Navigate to="/event" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="event" element={<EventListPage />} />
+          <Route path="event/fight/:fightId" element={<FightDetail />} />
+          <Route path="fighter" element={<Navigate to="/fighter/index" replace />} />
+          <Route path="fighter/index" element={<FighterIndex onFighterSelect={(f) => navigate(`/fighter/${f.id}`)} />} />
+          <Route path="fighter/:id" element={<FighterProfilePage />} />
+          <Route path="competition" element={<MMAMetricsRankings />} />
+          <Route path="ai" element={<AIPredictionsTab />} />
+          <Route path="chat" element={<ChatHub />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
         <Route path="/admin/fight-cards" element={<AdminFightCards />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

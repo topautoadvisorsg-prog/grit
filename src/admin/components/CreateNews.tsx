@@ -32,7 +32,7 @@ const initialFormData: NewsFormData = {
   subtitle: '',
   excerpt: '',
   content: '',
-  author: 'MMA Matrix Staff',
+  author: 'GRIT Staff',
   imageUrl: '',
   tags: [],
   eventReference: '',
@@ -45,7 +45,7 @@ const initialFormData: NewsFormData = {
 export const CreateNews = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [formData, setFormData] = useState<NewsFormData>(initialFormData);
   const [tagInput, setTagInput] = useState('');
   const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
@@ -155,7 +155,7 @@ export const CreateNews = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.excerpt.trim() || !formData.content.trim()) {
       toast({ title: 'Error', description: 'Title, excerpt, and content are required', variant: 'destructive' });
       return;
@@ -329,9 +329,9 @@ export const CreateNews = () => {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {formData.tags.map((tag) => (
-                    <Badge 
-                      key={tag} 
-                      variant="secondary" 
+                    <Badge
+                      key={tag}
+                      variant="secondary"
                       className="gap-1 cursor-pointer"
                       onClick={() => handleRemoveTag(tag)}
                     >
@@ -368,7 +368,7 @@ export const CreateNews = () => {
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Existing Articles ({articles.length})</h2>
-        
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

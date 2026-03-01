@@ -2,7 +2,7 @@
     "sidebar": {
         "dashboard": "Painel",
         "eventcard": "Card do Evento",
-        "rankings": "Rankings MMA Metrics",
+        "rankings": "Rankings GRIT",
         "fighters": "Perfis de Lutadores",
         "eventhistory": "Histórico de Eventos",
         "news": "Notícias",
@@ -44,9 +44,9 @@
     "hero": {
         "badge": "Competição Global Ao Vivo",
         "title_main": "Analise. Compita. Domine.",
-        "title_accent": "A Liga dos Campeões de MMA com IA",
+        "title_accent": "Plataforma de Previsões e Análises de MMA",
         "subtitle": "Múltiplos Sistemas de IA. Uma Arena Global. Seu QI de Luta.",
-        "desc": "Uma liga competitiva onde múltiplos sistemas de IA analisam lutas, você toma as decisões e os rankings globais provam quem realmente entende de MMA.",
+        "desc": "GRIT é uma plataforma da Liga de Fantasia Global de MMA onde os usuários analizam previsões de lutas, estudam o histórico de desempenho dos lutadores e acompanham rankings competitivos.",
         "cta": "Entre na Liga"
     },
     "ai_arena": {
@@ -64,7 +64,7 @@
     },
     "intro": {
         "label": "O Que É Isso?",
-        "title": "MMA Champions League É uma Liga de Inteligência Competitiva",
+        "title": "GRIT é uma Liga de Inteligência Competitiva",
         "desc": "Não é uma casa de apostas. Não é um app básico de palpites. É uma plataforma competitiva onde múltiplos sistemas de IA analisam as mesmas lutas — e você decide quem está certo. Estude os dados, faça seus picks e compita contra o mundo.",
         "pill_ai": "Arena IA",
         "pill_rankings": "Rankings Globais",
@@ -164,15 +164,15 @@
         "pro_desc": "Potência total. Chat IA, emblemas exclusivos e vantagens VIP.",
         "pro_feat1": "Tudo do plano Plus",
         "pro_feat2": "Chat MMA com IA (ilimitado)",
-        "pro_feat3": "Emblema MMA Champions League",
+        "pro_feat3": "Emblema GRIT",
         "pro_feat4": "Vantagens em sorteios",
         "pro_feat5": "Acesso antecipado a funcionalidades",
         "pro_cta": "Ser Pro"
     },
     "footer_cta": {
         "title1": "Pronto para Entrar n",
-        "title2": "A Matrix?",
+        "title2": "GRIT?",
         "subtitle": "Entre na liga. Faça picks mais inteligentes, suba nos rankings e prove seu QI de luta no palco global.",
-        "cta": "Entrar na Matrix"
+        "cta": "Entrar no GRIT"
     }
 }

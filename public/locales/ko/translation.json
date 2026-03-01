@@ -44,9 +44,9 @@
     "hero": {
         "badge": "글로벌 대회 라이브",
         "title_main": "분석하라. 경쟁하라. 지배하라.",
-        "title_accent": "AI 기반 MMA Champions League",
+        "title_accent": "MMA 예측 및 분석 플랫폼",
         "subtitle": "다수의 AI 시스템. 하나의 글로벌 아레나. 당신의 격투 IQ.",
-        "desc": "다수의 AI 시스템이 경기를 분석하고, 당신이 판단을 내리며, 글로벌 랭킹이 누가 진정으로 MMA를 이해하는지 증명하는 경쟁 리그입니다.",
+        "desc": "GRIT은 사용자가 MMA 경기 예측을 분석하고, 선수의 퍼포먼스 이력을 연구하며, 이벤트 전반의 경쟁 순위를 추적하는 글로벌 MMA 판타지 리그 플랫폼입니다.",
         "cta": "리그에 참여하기"
     },
     "ai_arena": {
@@ -64,7 +64,7 @@
     },
     "intro": {
         "label": "이게 뭐죠?",
-        "title": "MMA Champions League는 경쟁형 인텔리전스 리그입니다",
+        "title": "GRIT은 경쟁형 인텔리전스 리그입니다",
         "desc": "스포츠 베팅 사이트가 아닙니다. 기본적인 예측 앱도 아닙니다. 다수의 AI 시스템이 동일한 경기를 분석하고 — 당신이 누가 맞는지 결정하는 경쟁 플랫폼입니다. 데이터를 연구하고, 픽을 선택하고, 전 세계와 경쟁하세요.",
         "pill_ai": "AI 아레나",
         "pill_rankings": "글로벌 랭킹",
@@ -164,15 +164,15 @@
         "pro_desc": "풀 파워. AI 채팅, 독점 배지, VIP 혜택.",
         "pro_feat1": "Plus 플랜의 모든 기능 포함",
         "pro_feat2": "AI MMA 채팅 (무제한)",
-        "pro_feat3": "MMA Champions League 배지",
+        "pro_feat3": "GRIT 배지",
         "pro_feat4": "추첨 혜택",
         "pro_feat5": "신기능 조기 접근",
         "pro_cta": "Pro로 전환"
     },
     "footer_cta": {
         "title1": "들어갈 준비가 되셨나요? ",
-        "title2": "The Matrix",
+        "title2": "GRIT",
         "subtitle": "리그에 참여하세요. 더 스마트한 픽을 하고, 랭킹을 올리고, 글로벌 무대에서 격투 IQ를 증명하세요.",
-        "cta": "The Matrix 입장"
+        "cta": "GRIT 입장"
     }
 }
